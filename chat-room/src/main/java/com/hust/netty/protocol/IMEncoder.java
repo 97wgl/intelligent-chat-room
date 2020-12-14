@@ -16,23 +16,33 @@ public class IMEncoder extends MessageToByteEncoder<IMMessage> {
         out.writeBytes(new MessagePack().write(msg));
     }
 
+    /**
+     * 将消息实体转化为协议字符串
+     * @param msg 消息实体
+     * @return 协议字符串  [消息类型][时间戳][用户名][用户头像] - 消息
+     * 示例：
+     * [CHAT][1607956475736][王桂林][https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201124102557.png] - wang guilin
+     */
     public String encode(IMMessage msg) {
         if (null == msg) {
             return "";
         }
-        String encoderMsg = "[" + msg.getCmd() + "]" + "[" + msg.getTime() + "]";
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("[").append(msg.getCmd()).append("][").append(msg.getTime()).append("]");
         if (IMP.LOGIN.getName().equals(msg.getCmd()) ||
                 IMP.FLOWER.getName().equals(msg.getCmd())) {
-            encoderMsg += ("[" + msg.getSender() + "]");
+            stringBuilder.append("[").append(msg.getSender()).append("]");
         } else if (IMP.CHAT.getName().equals(msg.getCmd())) {
-            encoderMsg += ("[" + msg.getSender() + "][" + msg.getHeadPic() + "]");
+            stringBuilder.append("[").append(msg.getSender()).append("][").append(msg.getHeadPic()).append("]");
         } else if (IMP.SYSTEM.getName().equals(msg.getCmd())) {
-            encoderMsg += ("[" + msg.getOnline() + "]");
+            stringBuilder.append("[").append(msg.getOnline()).append("]");
         }
         if (!(null == msg.getContent() || "".equals(msg.getContent()))) {
-            encoderMsg += (" - " + msg.getContent().replace("\n", "<br/>"));
+            stringBuilder.append(" - ").append(msg.getContent().replace("\n", "<br/>"));
         }
-        return encoderMsg;
+        
+        return stringBuilder.toString();
+        
     }
 
 }
