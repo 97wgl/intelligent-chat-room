@@ -1,0 +1,301 @@
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-corner, ::-webkit-scrollbar-track {
+    background-color: #e2e2e2;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, .3);
+}
+
+::-webkit-scrollbar-corner, ::-webkit-scrollbar-track {
+    background-color: #e2e2e2;
+}
+
+.online-count {
+    position: fixed;
+    top: 20px;
+    width: 100%;
+    text-align: center;
+}
+
+.cy-chat-main {
+    position: absolute;
+    width: 100%;
+    bottom: 191px;
+    top: 61px;
+    _height: 100%;
+    _border-top: 50px solid #eee;
+    _border-bottom: 50px solid #eee;
+    _top: 0;
+    /*padding: 15px 15px 5px;*/
+    overflow-x: hidden;
+    overflow-y: auto
+}
+
+.cy-chat-main ul li {
+    position: relative;
+    font-size: 0;
+    margin-bottom: 10px;
+    margin-top: 5px;
+    padding-left: 60px;
+    min-height: 68px
+}
+
+
+.cy-chat-main ul .cy-chat-system {
+    min-height: 0;
+    padding: 0
+}
+
+.cy-chat-system {
+    margin: 10px 0;
+    text-align: center;
+}
+
+.cy-chat-system span {
+    display: inline-block;
+    line-height: 30px;
+    padding: 0 15px;
+    border-radius: 3px;
+    background-color: #e2e2e2;
+    cursor: default;
+    font-size: 14px;
+}
+
+.cy-chat-main ul .cy-chat-mine {
+    text-align: right;
+    padding-left: 0;
+    padding-right: 60px
+}
+
+
+.cy-chat-main ul .layim-chat-mine {
+    text-align: right;
+    padding-left: 0;
+    padding-right: 60px;
+}
+
+.cy-chat-mine .cy-chat-user {
+    left: auto;
+    right: 3px;
+}
+
+.cy-chat-user {
+    position: absolute;
+    left: 3px;
+}
+
+.cy-chat-user img {
+    width: 40px;
+    height: 40px;
+    border-radius: 100%;
+}
+
+.cy-chat-text, .cy-chat-user {
+    display: inline-block;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+.cy-chat-mine .cy-chat-text {
+    margin-left: 0;
+    text-align: left;
+    background-color: #1E9FFF;
+    color: #fff;
+}
+
+.cy-chat-text {
+    position: relative;
+    line-height: 22px;
+    margin-top: 25px;
+    padding: 8px 15px;
+    background-color: #e2e2e2;
+    border-radius: 3px;
+    color: #333;
+    word-break: break-all;
+    max-width: 462px \9;
+}
+
+.cy-chat-text, .cy-chat-user {
+    display: inline-block;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+.cy-chat-mine .cy-chat-user cite {
+    left: auto;
+    right: 60px;
+    text-align: right;
+}
+
+.cy-chat-user cite {
+    position: absolute;
+    left: 60px;
+    top: -2px;
+    width: 500px;
+    line-height: 24px;
+    font-size: 12px;
+    white-space: nowrap;
+    color: #999;
+    text-align: left;
+    font-style: normal;
+}
+
+.cy-chat-mine .cy-chat-user cite i {
+    padding-left: 0;
+    padding-right: 15px;
+}
+
+.cy-chat-user cite i {
+    padding-left: 15px;
+    font-style: normal;
+}
+
+.cy-chat-text:after {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 13px;
+    width: 0;
+    height: 0;
+    border-style: solid dashed dashed;
+    border-color: #e2e2e2 transparent transparent;
+    overflow: hidden;
+    border-width: 10px;
+}
+
+.cy-chat-mine .cy-chat-text:after {
+    left: auto;
+    right: -10px;
+    border-top-color: #1E9FFF;
+}
+
+.cy-chat-text:after {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 13px;
+    width: 0;
+    height: 0;
+    border-style: solid dashed dashed;
+    border-color: #e2e2e2 transparent transparent;
+    overflow: hidden;
+    border-width: 10px;
+}
+
+
+.cy-chat-footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: white;
+    border-top: 1px solid #F1F1F1;
+}
+
+.cy-chat-tool {
+    position: relative;
+    padding: 0 8px;
+    height: 38px;
+    line-height: 38px;
+    font-size: 0;
+}
+
+.cy-chat-tool span {
+    position: relative;
+    margin: 0 10px;
+    display: inline-block;
+    vertical-align: top;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.cy-chat-tool span:hover {
+    color: #1E9FFF;
+}
+
+.cy-chat-textarea {
+    margin-left: 10px;
+}
+
+.cy-chat-textarea textarea {
+    display: block;
+    width: 100%;
+    padding: 5px 0 0;
+    height: 100px;
+    line-height: 20px;
+    border: none;
+    overflow: auto;
+    resize: none;
+    background: 0 0;
+}
+
+.cy-chat-bottom {
+    position: relative;
+    height: 46px;
+}
+
+.cy-chat-send {
+    position: absolute;
+    right: 15px;
+    top: 3px;
+    height: 32px;
+    line-height: 32px;
+    font-size: 0;
+    cursor: pointer;
+}
+
+.cy-chat-send .cy-send-btn {
+    border-radius: 3px 0 0 3px;
+}
+
+.cy-chat-send span {
+    display: inline-block;
+    vertical-align: top;
+    font-size: 14px;
+    line-height: 32px;
+    margin-left: 5px;
+    padding: 0 20px;
+    background-color: #1E9FFF;
+    color: #fff;
+    border-radius: 3px;
+}
+
+.cy-chat-send .cy-send-set {
+    position: relative;
+    width: 30px;
+    height: 32px;
+    margin-left: 0;
+    padding: 0;
+    border-left: 1px solid #1E9FFF;
+    border-radius: 0 3px 3px 0;
+}
+
+.cy-send-set .layui-edge {
+    position: absolute;
+    top: 14px;
+    left: 9px;
+    border-width: 6px;
+    border-top-style: solid;
+    border-top-color: #fff;
+}
+
+.face-box {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    height: 500px;
+    width: 500px;
+    overflow: auto;
+    background: #FFF;
+}
+
+@media screen and (max-width: 768px) {
+    .mobile-none, .nav-right {
+        display: none !important
+    }
+}
