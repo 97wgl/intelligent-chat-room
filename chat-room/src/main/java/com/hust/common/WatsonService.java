@@ -1,9 +1,12 @@
 package com.hust.common;
 
+import com.google.gson.Gson;
 import com.hust.config.ClassFirstConfig;
 import com.ibm.cloud.sdk.core.security.IamAuthenticator;
 import com.ibm.watson.assistant.v2.Assistant;
 import com.ibm.watson.assistant.v2.model.*;
+
+import java.util.UUID;
 
 public class WatsonService {
     
@@ -14,22 +17,18 @@ public class WatsonService {
         ASSISTANT.setServiceUrl(ClassFirstConfig.SERVICE_URL);
     }
 
-    public static String requestOfText(String request, SessionResponse session) {
+    public static MessageResponse requestOfText(String request, SessionResponse session) {
 
         MessageInput input = new MessageInput.Builder()
                 .messageType("text")
                 .text(request)
                 .build();
 
-        MessageOptions options = new MessageOptions.Builder(ClassFirstConfig.ASSISTANT_ID, session == null ? "dfsafdgjahuigdhs" : session.getSessionId())
+        MessageOptions options = new MessageOptions.Builder(ClassFirstConfig.ASSISTANT_ID, session == null ? UUID.randomUUID().toString() : session.getSessionId())
                 .input(input)
                 .build();
 
-        StringBuilder res = new StringBuilder();
-        for (RuntimeResponseGeneric s : ASSISTANT.message(options).execute().getResult().getOutput().getGeneric()) {
-            res.append(s.text()).append("\n");
-        }
-        return res.toString();
+        return ASSISTANT.message(options).execute().getResult();
     }
 
 }

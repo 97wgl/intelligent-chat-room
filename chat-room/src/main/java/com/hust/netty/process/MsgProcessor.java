@@ -1,6 +1,7 @@
 package com.hust.netty.process;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hust.common.SessionResponseCounterPair;
 import com.hust.common.WatsonService;
 import com.hust.config.ClassFirstConfig;
 import com.hust.netty.protocol.IMDecoder;
@@ -8,6 +9,8 @@ import com.hust.netty.protocol.IMEncoder;
 import com.hust.netty.protocol.IMMessage;
 import com.hust.netty.protocol.IMP;
 import com.ibm.watson.assistant.v2.model.CreateSessionOptions;
+import com.ibm.watson.assistant.v2.model.MessageResponse;
+import com.ibm.watson.assistant.v2.model.RuntimeResponseGeneric;
 import com.ibm.watson.assistant.v2.model.SessionResponse;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
@@ -17,6 +20,7 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,7 +34,8 @@ public class MsgProcessor {
     // 记录在线用户
     private static final ChannelGroup onlineUsers = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
     // 每一个客户端对应一个Watson的Session
-    private static final ConcurrentHashMap<Channel, SessionResponse> clientSessionMap = new ConcurrentHashMap<>();
+    // private static final ConcurrentHashMap<Channel, SessionResponse> clientSessionMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Channel, SessionResponseCounterPair> clientSession = new ConcurrentHashMap<>();
     // channel自定义属性
     private final AttributeKey<String> USERNAME = AttributeKey.valueOf("username");
     private final AttributeKey<String> HEAD_PIC = AttributeKey.valueOf("headPic");
@@ -46,7 +51,6 @@ public class MsgProcessor {
     private final static IMMessage teacherResponse = new IMMessage(IMP.CHAT.getName(), "虚拟教师", "https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207204353.png");
 
     public void process(Channel client, String msg) {
-        System.out.println(msg);
         // 将字符串解析为自定义格式
         IMMessage request = decoder.decode(msg);
         if (null == request) {
@@ -60,9 +64,10 @@ public class MsgProcessor {
             client.attr(IP_ADDR).getAndSet("");
             client.attr(USERNAME).getAndSet(request.getSender());
             client.attr(HEAD_PIC).getAndSet(request.getHeadPic());
-
+            // 将当前用户添加进在线用户列表
             onlineUsers.add(client);
             SessionResponse watsonSession = null;
+            // 创建watson助手的session
             while (watsonSession == null) {
                 try {
                     CreateSessionOptions sessionOptions = new CreateSessionOptions.Builder(ClassFirstConfig.ASSISTANT_ID).build();
@@ -76,16 +81,18 @@ public class MsgProcessor {
                     e.printStackTrace();
                 }
             }
-            clientSessionMap.put(client, watsonSession);
+            // 将netty客户端和watson的session进行对应
+            // clientSessionMap.put(client, watsonSession);
+            clientSession.put(client, new SessionResponseCounterPair(watsonSession, 1, 0));
             // 调用IBM Watson
             teacherResponse.setTime(sysTime());
-            teacherResponse.setContent(WatsonService.requestOfText(request.getContent(), watsonSession));
+            teacherResponse.setContent(buildResponseText(WatsonService.requestOfText(request.getContent(), watsonSession)));
             if (onlineUsers.size() > 1) {
                 teacherResponse.setContent(teacherResponse.getContent() + " @" + request.getSender());
             }
             String welcomeText = encoder.encode(teacherResponse);
             // 向所有用户发送系统消息
-            for (Channel channel : onlineUsers) {//向其他人发送消息
+            for (Channel channel : onlineUsers) {
                 if (channel != client) {
                     // 自定义系统消息格式 [system][时间戳][用户数量][消息内容]
                     request = new IMMessage(IMP.SYSTEM.getName(), sysTime(), onlineUsers.size(), username + " 加入课堂！");
@@ -108,31 +115,41 @@ public class MsgProcessor {
         else if (IMP.CHAT.getName().equals(request.getCmd())) {
             synchronized (MsgProcessor.class) {
                 studentReplied = true;
-                SessionResponse sessionResponse = clientSessionMap.get(client);
+                SessionResponseCounterPair pair = clientSession.get(client);
                 // 调用IBM Watson
                 teacherResponse.setTime(sysTime());
-                teacherResponse.setContent(WatsonService.requestOfText(request.getContent(), sessionResponse));
-                //自定义IM协议解码
+                MessageResponse messageResponse = WatsonService.requestOfText(request.getContent(), pair.getSessionResponse());
+                // 没有识别到意图
+                if (messageResponse == null || messageResponse.getOutput() == null || messageResponse.getOutput().getIntents() == null ||
+                        messageResponse.getOutput().getIntents().size() == 0) {
+                    pair.setRepeatResponseCounter(pair.getRepeatResponseCounter() + 1);
+                    if (pair.getRepeatResponseCounter() > 3) {
+                        // TODO 将正确意图回答给watson
+                    }
+                }
+                teacherResponse.setContent(buildResponseText(messageResponse));
+                // 如果当前在线用户数大于1，则在消息后面加一个@符号
                 if (onlineUsers.size() > 1) {
                     teacherResponse.setContent(teacherResponse.getContent() + " @" + request.getSender());
                 }
                 String sysText = encoder.encode(teacherResponse);
-                System.out.println(sysText);
-                for (Channel channel : onlineUsers) {//向其他人发送消息
+                // System.out.println(sysText);
+                for (Channel channel : onlineUsers) {
+                    // 向其他人发送消息
                     if (channel != client) {
                         request.setSender(username);
                     }
-                    //向自己发送消息
+                    // 向自己发送消息
                     else {
                         request.setSender("MY_SELF");
                     }
-                    //发送消息
+                    // 发送消息
                     String text = encoder.encode(request);
                     channel.writeAndFlush(new TextWebSocketFrame(text));
                     channel.writeAndFlush(new TextWebSocketFrame(sysText));
                 }
                 studentReplied = false;
-                new Thread(new AssistantReplyTask(client, request.getContent(), sessionResponse)).start();
+                new Thread(new AssistantReplyTask(client, request.getContent(), pair.getSessionResponse())).start();
             }
         }
         // 鲜花动作
@@ -153,7 +170,7 @@ public class MsgProcessor {
                     return;
                 }
             }
-            //正常送花
+            // 正常送花
             for (Channel channel : onlineUsers) {
                 if (channel == client) {
                     request.setSender("MY_SELF");
@@ -169,6 +186,25 @@ public class MsgProcessor {
                 channel.writeAndFlush(new TextWebSocketFrame(content));
             }
         }
+    }
+
+    private String buildResponseText(MessageResponse messageResponse) {
+        StringBuilder res = new StringBuilder();
+        for (RuntimeResponseGeneric s : messageResponse.getOutput().getGeneric()) {
+            String responseType = s.responseType();
+            switch (responseType) {
+                case "text":
+                    res.append(s.text());
+                    break;
+                case "image":
+                    res.append("<img src='").append(s.source()).append("'>");
+                    break;
+                default:
+                    res.append("未知的返回类型");
+            }
+            res.append("\n");
+        }
+        return res.toString();
     }
 
 
@@ -235,11 +271,12 @@ public class MsgProcessor {
         request.setOnline(onlineUsers.size());
         request.setContent(request.getSender() + " 退出课堂！");
         //向所有用户发送系统消息
-        for (Channel channel : onlineUsers) {//向其他人发送消息
+        for (Channel channel : onlineUsers) {
+            // 向其他人发送消息
             if (channel != client) {
-                //自定义IM协议解码
+                // 自定义IM协议解码
                 String text = encoder.encode(request);
-                //发送消息
+                // 发送消息
                 channel.writeAndFlush(new TextWebSocketFrame(text));
             }
         }
@@ -264,6 +301,7 @@ public class MsgProcessor {
 @Slf4j
 class AssistantReplyTask implements Runnable {
 
+    // 学伴等待响应时间：WAIT_TIME * 0.2（s）
     private static final int WAIT_TIME = 25;
 
     private final Channel session;
@@ -271,6 +309,8 @@ class AssistantReplyTask implements Runnable {
     private final SessionResponse sessionResponse;
 
     private AtomicInteger time;
+
+    private Integer dialogCounter;
 
     public AssistantReplyTask(Channel session, String requestMsg, SessionResponse sessionResponse) {
         this.session = session;
