@@ -1,0 +1,22 @@
+# 项目运行端口
+server:
+  port: 8001
+# Freemarker 配置
+spring:
+  freemarker:
+    template-loader-path: classpath:/templates/
+    suffix: .ftl
+# 静态资源路径
+  resources:
+    static-locations: classpath:/templates/,classpath:/static/
+# redis
+  redis:
+    host: localhost
+    port: 6379
+    database: 1
+    pool:
+      max-active: 8
+      max-wait: -1
+      max-idle: 500
+      min-idle: 0
+    timeout: 0
