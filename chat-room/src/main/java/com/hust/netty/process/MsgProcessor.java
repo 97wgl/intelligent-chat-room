@@ -1,6 +1,7 @@
 package com.hust.netty.process;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hust.common.ClassOneData;
 import com.hust.common.SessionResponseCounterPair;
 import com.hust.common.WatsonService;
 import com.hust.config.ClassFirstConfig;
@@ -20,7 +21,6 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -106,6 +106,7 @@ public class MsgProcessor {
                 channel.writeAndFlush(new TextWebSocketFrame(text));
                 channel.writeAndFlush(new TextWebSocketFrame(welcomeText));
             }
+            new Thread(new AssistantReplyTask(client, request.getContent(), watsonSession, 1)).start();
         }
         // 登出动作
         else if (IMP.LOGOUT.getName().equals(request.getCmd())) {
@@ -120,12 +121,17 @@ public class MsgProcessor {
                 teacherResponse.setTime(sysTime());
                 MessageResponse messageResponse = WatsonService.requestOfText(request.getContent(), pair.getSessionResponse());
                 // 没有识别到意图
-                if (messageResponse == null || messageResponse.getOutput() == null || messageResponse.getOutput().getIntents() == null ||
-                        messageResponse.getOutput().getIntents().size() == 0) {
+                if (messageResponse.getOutput().getIntents().size() == 0 && messageResponse.getOutput().getEntities().size() == 0) {
                     pair.setRepeatResponseCounter(pair.getRepeatResponseCounter() + 1);
+                    log.info("没有识别到意图，计数器加1, 当前计数为" + pair.getRepeatResponseCounter());
                     if (pair.getRepeatResponseCounter() > 3) {
                         // TODO 将正确意图回答给watson
+                        log.info("计数器大于3，跳转到下一轮对话");
+                        pair.setDialogCounter(pair.getDialogCounter() + 1);
+                        pair.setRepeatResponseCounter(0);
                     }
+                } else {
+                    pair.setDialogCounter(pair.getDialogCounter() + 1);
                 }
                 teacherResponse.setContent(buildResponseText(messageResponse));
                 // 如果当前在线用户数大于1，则在消息后面加一个@符号
@@ -149,7 +155,7 @@ public class MsgProcessor {
                     channel.writeAndFlush(new TextWebSocketFrame(sysText));
                 }
                 studentReplied = false;
-                new Thread(new AssistantReplyTask(client, request.getContent(), pair.getSessionResponse())).start();
+                new Thread(new AssistantReplyTask(client, request.getContent(), pair.getSessionResponse(), pair.getDialogCounter())).start();
             }
         }
         // 鲜花动作
@@ -312,11 +318,12 @@ class AssistantReplyTask implements Runnable {
 
     private Integer dialogCounter;
 
-    public AssistantReplyTask(Channel session, String requestMsg, SessionResponse sessionResponse) {
+    public AssistantReplyTask(Channel session, String requestMsg, SessionResponse sessionResponse, Integer dialogCounter) {
         this.session = session;
         this.requestMsg = requestMsg;
         this.sessionResponse = sessionResponse;
         time = new AtomicInteger(0);
+        this.dialogCounter = dialogCounter;
     }
 
     @SneakyThrows
@@ -328,12 +335,12 @@ class AssistantReplyTask implements Runnable {
             if (MsgProcessor.studentReplied) {
                 break;
             }
-            if (time.get() == WAIT_TIME) {
-                if (!MsgProcessor.studentReplied) {
+            if (time.get() >= WAIT_TIME) {
+                if (!MsgProcessor.studentReplied && ClassOneData.data.containsKey(dialogCounter)) {
                     IMMessage assistantResponse = new IMMessage(IMP.CHAT.getName(), MsgProcessor.sysTime(), "学伴");
                     // 调用IBM Watson - 学伴
                     // assistantResponse.setContent(WatsonService.requestOfText(requestMsg, sessionResponse));
-                    assistantResponse.setContent("调用学伴机器人回复【暂未设置】");
+                    assistantResponse.setContent(ClassOneData.data.get(dialogCounter));
                     assistantResponse.setHeadPic("https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207200240.jpeg");
                     session.writeAndFlush(new TextWebSocketFrame(new IMEncoder().encode(assistantResponse)));
                 }
