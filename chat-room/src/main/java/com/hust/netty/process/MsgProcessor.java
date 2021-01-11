@@ -23,10 +23,8 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import io.swagger.models.auth.In;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -55,6 +53,13 @@ public class MsgProcessor {
     protected static volatile boolean studentReplied = false;
     // 虚拟教师对话角色
     private final static IMMessage teacherResponse = new IMMessage(IMP.CHAT.getName(), "虚拟教师", "https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207204353.png");
+
+    private static DialogLibraryService dialogLibraryService;
+
+    static {
+        // 通过SpringBoot的上下文中获取service对象
+        dialogLibraryService = SpringContextUtil.getBean(DialogLibraryService.class);
+    }
 
     public void process(Channel client, String msg) {
         // 将字符串解析为自定义格式
@@ -131,8 +136,8 @@ public class MsgProcessor {
                     pair.setRepeatResponseCounter(pair.getRepeatResponseCounter() + 1);
                     log.info("没有识别到意图，计数器加1, 当前计数为" + pair.getRepeatResponseCounter());
                     if (pair.getRepeatResponseCounter() > 3) {
-                        // TODO 将正确意图回答给watson
-//                        messageResponse = WatsonService.requestOfText(, pair.getSessionResponse());
+                        messageResponse = WatsonService.requestOfText(dialogLibraryService.getOne(
+                                new QueryWrapper<DialogLibrary>().eq("class_id", 1).eq("round_no", pair.getDialogCounter())).getAssistantReply(), pair.getSessionResponse());
                         log.info("计数器大于3，跳转到下一轮对话");
                         pair.setDialogCounter(pair.getDialogCounter() + 1);
                         pair.setRepeatResponseCounter(0);
@@ -317,7 +322,7 @@ class AssistantReplyTask implements Runnable {
     private static DialogLibraryService dialogLibraryService;
 
     static {
-        //从 Spring 容器中获取service对象
+        // 通过SpringBoot的上下文中获取service对象
         dialogLibraryService = SpringContextUtil.getBean(DialogLibraryService.class);
     }
 
