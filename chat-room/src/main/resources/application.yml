@@ -3,6 +3,8 @@ server:
   port: 8001
 # Freemarker 配置
 spring:
+  profiles:
+    active: dev
   freemarker:
     template-loader-path: classpath:/templates/
     suffix: .ftl

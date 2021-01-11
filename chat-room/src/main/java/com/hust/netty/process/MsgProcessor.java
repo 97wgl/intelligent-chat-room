@@ -1,14 +1,18 @@
 package com.hust.netty.process;
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.hust.common.ClassOneData;
 import com.hust.common.SessionResponseCounterPair;
-import com.hust.common.WatsonService;
+import com.hust.entity.DialogLibrary;
+import com.hust.service.DialogLibraryService;
+import com.hust.service.WatsonService;
 import com.hust.config.ClassFirstConfig;
 import com.hust.netty.protocol.IMDecoder;
 import com.hust.netty.protocol.IMEncoder;
 import com.hust.netty.protocol.IMMessage;
 import com.hust.netty.protocol.IMP;
+import com.hust.util.comonent.SpringContextUtil;
 import com.ibm.watson.assistant.v2.model.CreateSessionOptions;
 import com.ibm.watson.assistant.v2.model.MessageResponse;
 import com.ibm.watson.assistant.v2.model.RuntimeResponseGeneric;
@@ -19,8 +23,10 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import io.swagger.models.auth.In;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -106,7 +112,7 @@ public class MsgProcessor {
                 channel.writeAndFlush(new TextWebSocketFrame(text));
                 channel.writeAndFlush(new TextWebSocketFrame(welcomeText));
             }
-            new Thread(new AssistantReplyTask(client, request.getContent(), watsonSession, 1)).start();
+            new Thread(new AssistantReplyTask(client, 1, 1)).start();
         }
         // 登出动作
         else if (IMP.LOGOUT.getName().equals(request.getCmd())) {
@@ -126,6 +132,7 @@ public class MsgProcessor {
                     log.info("没有识别到意图，计数器加1, 当前计数为" + pair.getRepeatResponseCounter());
                     if (pair.getRepeatResponseCounter() > 3) {
                         // TODO 将正确意图回答给watson
+//                        messageResponse = WatsonService.requestOfText(, pair.getSessionResponse());
                         log.info("计数器大于3，跳转到下一轮对话");
                         pair.setDialogCounter(pair.getDialogCounter() + 1);
                         pair.setRepeatResponseCounter(0);
@@ -155,7 +162,7 @@ public class MsgProcessor {
                     channel.writeAndFlush(new TextWebSocketFrame(sysText));
                 }
                 studentReplied = false;
-                new Thread(new AssistantReplyTask(client, request.getContent(), pair.getSessionResponse(), pair.getDialogCounter())).start();
+                new Thread(new AssistantReplyTask(client, pair.getDialogCounter(), 1)).start();
             }
         }
         // 鲜花动作
@@ -307,23 +314,29 @@ public class MsgProcessor {
 @Slf4j
 class AssistantReplyTask implements Runnable {
 
+    private static DialogLibraryService dialogLibraryService;
+
+    static {
+        //从 Spring 容器中获取service对象
+        dialogLibraryService = SpringContextUtil.getBean(DialogLibraryService.class);
+    }
+
     // 学伴等待响应时间：WAIT_TIME * 0.2（s）
     private static final int WAIT_TIME = 25;
 
     private final Channel session;
-    private final String requestMsg;
-    private final SessionResponse sessionResponse;
 
     private AtomicInteger time;
 
+    private Integer classId;
+
     private Integer dialogCounter;
 
-    public AssistantReplyTask(Channel session, String requestMsg, SessionResponse sessionResponse, Integer dialogCounter) {
+    public AssistantReplyTask(Channel session, Integer dialogCounter, Integer classId) {
         this.session = session;
-        this.requestMsg = requestMsg;
-        this.sessionResponse = sessionResponse;
-        time = new AtomicInteger(0);
         this.dialogCounter = dialogCounter;
+        this.classId = classId;
+        time = new AtomicInteger(0);
     }
 
     @SneakyThrows
@@ -338,11 +351,13 @@ class AssistantReplyTask implements Runnable {
             if (time.get() >= WAIT_TIME) {
                 if (!MsgProcessor.studentReplied && ClassOneData.data.containsKey(dialogCounter)) {
                     IMMessage assistantResponse = new IMMessage(IMP.CHAT.getName(), MsgProcessor.sysTime(), "学伴");
-                    // 调用IBM Watson - 学伴
-                    // assistantResponse.setContent(WatsonService.requestOfText(requestMsg, sessionResponse));
-                    assistantResponse.setContent(ClassOneData.data.get(dialogCounter));
+                    // 调用学伴回答库进行响应
+                    assistantResponse.setContent(dialogLibraryService.getOne(
+                            new QueryWrapper<DialogLibrary>().eq("class_id", classId).eq("round_no", dialogCounter)).getAssistantReply());
+
                     assistantResponse.setHeadPic("https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207200240.jpeg");
                     session.writeAndFlush(new TextWebSocketFrame(new IMEncoder().encode(assistantResponse)));
+
                 }
                 break;
             }

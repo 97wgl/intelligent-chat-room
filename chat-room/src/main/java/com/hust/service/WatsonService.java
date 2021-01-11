@@ -1,6 +1,5 @@
-package com.hust.common;
+package com.hust.service;
 
-import com.google.gson.Gson;
 import com.hust.config.ClassFirstConfig;
 import com.ibm.cloud.sdk.core.security.IamAuthenticator;
 import com.ibm.watson.assistant.v2.Assistant;
