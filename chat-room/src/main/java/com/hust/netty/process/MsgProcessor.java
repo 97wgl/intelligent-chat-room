@@ -57,7 +57,7 @@ public class MsgProcessor {
     private static final DialogLibraryService dialogLibraryService;
 
     static {
-        // 通过SpringBoot的上下文中获取service对象
+        // 通过自定义工具类获取SpringBoot的service对象
         dialogLibraryService = SpringContextUtil.getBean(DialogLibraryService.class);
     }
 
