@@ -54,7 +54,7 @@ public class MsgProcessor {
     // 虚拟教师对话角色
     private final static IMMessage teacherResponse = new IMMessage(IMP.CHAT.getName(), "虚拟教师", "https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207204353.png");
 
-    private static DialogLibraryService dialogLibraryService;
+    private static final DialogLibraryService dialogLibraryService;
 
     static {
         // 通过SpringBoot的上下文中获取service对象
@@ -319,7 +319,7 @@ public class MsgProcessor {
 @Slf4j
 class AssistantReplyTask implements Runnable {
 
-    private static DialogLibraryService dialogLibraryService;
+    private static final DialogLibraryService dialogLibraryService;
 
     static {
         // 通过SpringBoot的上下文中获取service对象
@@ -331,11 +331,11 @@ class AssistantReplyTask implements Runnable {
 
     private final Channel session;
 
-    private AtomicInteger time;
+    private final AtomicInteger time;
 
-    private Integer classId;
+    private final Integer classId;
 
-    private Integer dialogCounter;
+    private final Integer dialogCounter;
 
     public AssistantReplyTask(Channel session, Integer dialogCounter, Integer classId) {
         this.session = session;
