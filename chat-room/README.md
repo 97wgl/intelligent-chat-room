@@ -1,5 +1,10 @@
 # 对话教学系统
 
-### 更新日志
 
--[ ]  2021.01.04 接入学伴响应数据库
+## 软件环境 
+- SpringBoot 2.0 +
+- JDK 1.8
+- MySQL 5.7
+- Netty
+- 阿里语音合成sdk
+- IBM Waston sdk

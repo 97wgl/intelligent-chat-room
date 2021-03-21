@@ -4,8 +4,8 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://111.230.240.26:3306/dialog_teach_sys?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: wgl
-    password: wangguilin1997.9
+    username: dev_user_hust
+    password: dev_user_hust
     initialSize: 10   #初始化连接大小
     minIdle: 10   #最小连接池数量
     maxActive: 50 #最大连接池数量
