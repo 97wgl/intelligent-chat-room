@@ -4,10 +4,12 @@
     <title>聊天页面</title>
     <meta charset="utf-8">
     <#include "../header.ftl"/>
-    <link rel="stylesheet" href="/css/chat.css" media="all">
+    <link rel="stylesheet" type="text/css" href="/css/chat.css" media="all">
+    <link rel="stylesheet" type="text/css" href="/font/iconfont.css">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <script src="/js/chat.js"></script>
     <script src="/libs/jquery.snowfall.js"></script>
+
 </head>
 <body>
 <ul class="layui-nav layui-bg-blue">
@@ -44,11 +46,12 @@
     <div class="cy-chat-tool">
         <div class="face-box" id="faceBox"></div>
         <span class="iconfont  icon-biaoqing" onclick="CHAT.openFace()" title="选择表情"></span>
-        <#--<span class="iconfont  icon-jianqie" title="剪切" ></span>-->
+<#--        <span class="iconfont  icon-jianqie" title="剪切" ></span>-->
         <span class="iconfont  icon-tupian1" onclick="CHAT.chooseFile()" title="发送图片"></span>
         <input id="fileBtn" onchange="CHAT.sendPic(event)" type="file" name="fileName" accept="image/*" value="发送图片"
                style="display: none">
         <span class="iconfont  icon-shouye" onclick="CHAT.sendFlower()" title="鲜花"></span>
+        <span class="iconfont  icon-yuyin2 record-btn" title="语音"></span>
     </div>
 
     <div class="cy-chat-textarea">
@@ -64,9 +67,14 @@
 </div>
 
 
+<#--<div class="app">-->
+<#--    <audio controls class="audio-player"></audio>-->
+<#--</div>-->
+<script src="/js/recorder.js"></script>
+
 </body>
 <script>
-
+    // let recorder = new Recorder();
     $(function () {
         //初始化WebSocket
         CHAT.init('${(username)!""}');
@@ -80,7 +88,6 @@
             time: 4000
         });
     });
-
 
 </script>
 

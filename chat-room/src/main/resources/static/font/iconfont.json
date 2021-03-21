@@ -1,0 +1,93 @@
+{
+  "id": "",
+  "name": "",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "705710",
+      "name": "语音",
+      "font_class": "yuyin",
+      "unicode": "e634",
+      "unicode_decimal": 58932
+    },
+    {
+      "icon_id": "765527",
+      "name": "鲜花",
+      "font_class": "shouye",
+      "unicode": "e625",
+      "unicode_decimal": 58917
+    },
+    {
+      "icon_id": "831583",
+      "name": "voice",
+      "font_class": "voice",
+      "unicode": "e623",
+      "unicode_decimal": 58915
+    },
+    {
+      "icon_id": "1111468",
+      "name": "语音",
+      "font_class": "yuyin1",
+      "unicode": "e654",
+      "unicode_decimal": 58964
+    },
+    {
+      "icon_id": "1471079",
+      "name": "表情",
+      "font_class": "biaoqing-xue",
+      "unicode": "e632",
+      "unicode_decimal": 58930
+    },
+    {
+      "icon_id": "3640135",
+      "name": "语音",
+      "font_class": "yuyin2",
+      "unicode": "e8f7",
+      "unicode_decimal": 59639
+    },
+    {
+      "icon_id": "6878622",
+      "name": "语音",
+      "font_class": "yuyin3",
+      "unicode": "e609",
+      "unicode_decimal": 58889
+    },
+    {
+      "icon_id": "8746999",
+      "name": "播放",
+      "font_class": "bofang",
+      "unicode": "e673",
+      "unicode_decimal": 58995
+    },
+    {
+      "icon_id": "14480086",
+      "name": "图片 (1)",
+      "font_class": "tupian1",
+      "unicode": "e626",
+      "unicode_decimal": 58918
+    },
+    {
+      "icon_id": "16661755",
+      "name": "表情",
+      "font_class": "biaoqing",
+      "unicode": "e620",
+      "unicode_decimal": 58912
+    },
+    {
+      "icon_id": "17711781",
+      "name": "语音",
+      "font_class": "yuyin4",
+      "unicode": "e824",
+      "unicode_decimal": 59428
+    },
+    {
+      "icon_id": "20266178",
+      "name": "表情",
+      "font_class": "biaoqing1",
+      "unicode": "e6d8",
+      "unicode_decimal": 59096
+    }
+  ]
+}

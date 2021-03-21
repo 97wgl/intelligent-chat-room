@@ -7,8 +7,10 @@ import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.CharsetUtil;
+import lombok.extern.slf4j.Slf4j;
 
 @ChannelHandler.Sharable
+@Slf4j
 public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
     private WebSocketServerHandshaker handShaker;
@@ -95,7 +97,12 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
             return;
         }
-        // 当前只支持文本消息，不支持二进制消息
+        // 二进制消息
+        if (frame instanceof BinaryWebSocketFrame) {
+            log.info("接收到二进制消息...");
+        }
+
+        // 当前只支持文本消息
         if (!(frame instanceof TextWebSocketFrame)) {
             throw new UnsupportedOperationException("当前只支持文本消息，不支持二进制消息");
         }

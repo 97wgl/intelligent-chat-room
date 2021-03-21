@@ -291,7 +291,7 @@
     height: 500px;
     width: 500px;
     overflow: auto;
-    background: #FFF;
+    /*background: #FFF;*/
 }
 
 @media screen and (max-width: 768px) {

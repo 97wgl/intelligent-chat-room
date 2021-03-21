@@ -1,11 +1,11 @@
 /**
- * Created by Administrator on 2017/11/9.
+ * Created by Administrator on 2020/11/9.
  */
 /**
  * 前台js常用函数工具类
  * @author:wgl
  * @version 1.0
- * @Date: 2017/12/8
+ * @Date: 2019/12/8
  */
 (function ($, window) {
     //前台工具类对象
@@ -13,7 +13,7 @@
 
     /**
      * s随机头像
-     * @Date: 2017/12/8
+     * @Date: 2019/12/8
      */
     window.$t.getHeadPic = function () {
         var headPics = [
@@ -36,7 +36,7 @@
      * 日期格式化
      * @param fmt   转化格式
      * @param date   时间
-     * @Date: 2017/12/8
+     * @Date: 2019/12/8
      */
     window.$t.dateFormat = function (dateStr, fmt) {
         if (!dateStr) {
@@ -67,7 +67,7 @@
     /**
      * 获取前端缓存
      * @param key   字典或枚举  code|enum
-     * @Date: 2017/12/8
+     * @Date: 2019/12/8
      */
     window.$t.getStorageItem = function (key) {
         return JSON.parse(localStorage.getItem(key));
@@ -77,7 +77,7 @@
      * 设置前端缓存
      * @param key   字典或枚举  code|enum
      * @param data   存储的值（数组）
-     * @Date: 2017/12/8
+     * @Date: 2019/12/8
      */
     window.$t.setStorageItem = function (key, data) {
         localStorage.setItem(key, JSON.stringify(data));

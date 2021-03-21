@@ -33,7 +33,7 @@ layui.define(['laytpl', 'laypage', 'layer', 'form'], function (exports) {
                 that.config = $.extend({}, that.config, options);
                 return that;
             }
-            /**获取配置信息 wgl 2018/7/9*/
+            /**获取配置信息 wgl 2020/7/9*/
             , get: function (id) {
                 var config = thisTable.config[id];
                 return config;
@@ -586,7 +586,7 @@ layui.define(['laytpl', 'laypage', 'layer', 'form'], function (exports) {
                                 /**
                                  * 时间格式化 dateFormat
                                  * @param dateFormat format
-                                 * @author wgl 2018/04/23
+                                 * @author wgl 2020/04/23
                                  */
                                 if (item3.dateFormat) {
                                     item1[field] = $t.dateFormat(item1[field], item3.dateFormat);
@@ -595,7 +595,7 @@ layui.define(['laytpl', 'laypage', 'layer', 'form'], function (exports) {
                                 /**
                                  * 时间戳格式化 dateFormat
                                  * @param dateFormat format
-                                 * @author wgl 2018/04/23
+                                 * @author wgl 2020/04/23
                                  */
                                 if (item3.timeFormat) {
                                     item1[field] = $t.timeFormat(item1[field], item3.timeFormat);

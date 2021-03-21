@@ -1,13 +1,16 @@
 package com.hust.config;
 
 public class ClassFirstConfig {
-    public final static String ASSISTANT_ID = "c330058d-c07b-4801-8f43-b95d1b846910";
 
+    // 一个服务对应一个SERVICE_URL，可以包含多个ASSISTANT_ID（课）
     public final static String SERVICE_URL = "https://api.us-south.assistant.watson.cloud.ibm.com/instances/659c9d26-31d9-4ba4-99bb-14ed6b0aa3ed";
 
     public final static String API_KEY = "WDlok4GE5mvlOC3pQUxcJDQFuftpGvXg2ffOrmf1Qdk6";
 
     public final static String VERSION_DATE = "2020-09-24";
+
+    // 每一堂课对应一个ASSISTANT_ID
+    public final static String ASSISTANT_ID = "c330058d-c07b-4801-8f43-b95d1b846910";
 
 //    public final static String API_KEY = "Xo6ARL5UpHiFS417uihQW5awr6PRSRsgzX_73w1L0i3r";
 //

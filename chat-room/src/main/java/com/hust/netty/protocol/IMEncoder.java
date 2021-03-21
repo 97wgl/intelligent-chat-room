@@ -19,9 +19,9 @@ public class IMEncoder extends MessageToByteEncoder<IMMessage> {
     /**
      * 将消息实体转化为协议字符串
      * @param msg 消息实体
-     * @return 协议字符串  [消息类型][时间戳][用户名][用户头像] - 消息
+     * @return 协议字符串  [消息类型][时间戳][用户类别][用户名][用户头像] - 消息
      * 示例：
-     * [CHAT][1607956475736][王桂林][https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201124102557.png] - wang guilin
+     * [CHAT][1607956475736][student/assistant/teacher][王桂林][https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201124102557.png] - wang guilin
      */
     public String encode(IMMessage msg) {
         if (null == msg) {

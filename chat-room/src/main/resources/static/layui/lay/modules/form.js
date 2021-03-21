@@ -566,7 +566,7 @@ layui.define('layer', function (exports) {
                         if ($(othis).attr("verify-type") === 'file') {
                             othis = othis.parents("[cyType='uploadTool']").find("button");
                         }
-                        /**wgl 2018/6/12*/
+                        /**wgl 2020/6/12*/
                         //提示层风格
                         if (verType === 'msg') {
                             layer.msg(errorText, {icon: 5, shift: 6});
@@ -597,7 +597,7 @@ layui.define('layer', function (exports) {
         layui.each(fieldElem, function (_, item) {
             if (!item.name) return;
             if (/^checkbox|radio$/.test(item.type) && !item.checked) return;
-            /**解决复选框相同name只能获取最后一个值问题. by wgl 2017/7/26*/
+            /**解决复选框相同name只能获取最后一个值问题. by wgl 2020/7/26*/
             if (item.name.indexOf('[]') > -1) {
                 var real_name = item.name.substring(0, item.name.length - 2);
                 if (field[real_name] === undefined) {

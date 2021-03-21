@@ -137,6 +137,7 @@ window.CHAT = {
                     ' </div>',
                     ' <div class="cy-chat-text">',
                     content,
+                    ' <span class="iconfont  icon-bofang" title="播放"></span>',
                     '</div>',
                     '</li>'
                 ].join("");
@@ -149,6 +150,7 @@ window.CHAT = {
                     ' </div>',
                     ' <div class="cy-chat-text">',
                     content,
+                    ' <span class="iconfont  icon-bofang" title="播放"></span>',
                     '</div>',
                     '</li>'
                 ].join("");
@@ -161,6 +163,7 @@ window.CHAT = {
                     ' </div>',
                     ' <div class="cy-chat-text">',
                     content,
+                    ' <span class="iconfont  icon-bofang" title="播放"></span>',
                     '</div>',
                     '</li>'
                 ].join("");
