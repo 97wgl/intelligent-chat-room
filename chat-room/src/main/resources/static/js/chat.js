@@ -164,8 +164,8 @@ window.CHAT = {
                     '<cite>' + name + '<i>' + date + '</i></cite>',
                     ' </div>',
                     ' <div class="cy-chat-text">',
-                    content,
-                    ' <span class="iconfont  icon-bofang" title="播放"></span>',
+                    dialogContent,
+                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playContent(\'' + parseContent  +'\')"></span>',
                     '</div>',
                     '</li>'
                 ].join("");
