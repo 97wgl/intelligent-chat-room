@@ -90,10 +90,10 @@ window.CHAT = {
     appendToPanel: function (message) {
         console.log(message);
         var regx = /^\[(.*)\](\s\-\s(.*))?/g;
-        var group = '', label = "", content = "", cmd = "", time = 0, name = "", headPic = "";
+        var group = '', label = "", dialogContent = "", cmd = "", time = 0, name = "", headPic = "";
         while (group = regx.exec(message)) {
             label = group[1];
-            content = group[3];
+            dialogContent = group[3];
         }
         var labelArr = label.split("][");
         cmd = labelArr[0];
@@ -107,10 +107,12 @@ window.CHAT = {
             //在线人数
             $("#onlineCount").html("" + total);
             //系统消息
-            CHAT.addSystemTip(content);
+            CHAT.addSystemTip(dialogContent);
         }
         //如果是聊天信息
         else if (cmd === "CHAT") {
+            var parseContent = dialogContent.replaceAll("<br/>", " ").replaceAll("\n", "").replaceAll("\'", "\\'");
+            console.log("parse: " + parseContent);
             var date = $t.dateFormat(parseInt(time), "yyyy-MM-dd hh:mm:ss");
             //是否是自己
             var isMe = (name === "MY_SELF");
@@ -124,7 +126,7 @@ window.CHAT = {
                     '<cite><i>' + date + '</i></cite>',
                     ' </div>',
                     ' <div class="cy-chat-text">',
-                    content,
+                    dialogContent,
                     '</div>',
                     '</li>'
                 ].join("");
@@ -136,8 +138,8 @@ window.CHAT = {
                     '<cite>' + '<font color="red">' + name + '</font>' + '<i>' + date + '</i></cite>',
                     ' </div>',
                     ' <div class="cy-chat-text">',
-                    content,
-                    ' <span class="iconfont  icon-bofang" title="播放"></span>',
+                    dialogContent,
+                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playContent(\'' + parseContent  +'\')"></span>',
                     '</div>',
                     '</li>'
                 ].join("");
@@ -149,8 +151,8 @@ window.CHAT = {
                     '<cite>' + '<font color="blue">' + name + '</font>' + '<i>' + date + '</i></cite>',
                     ' </div>',
                     ' <div class="cy-chat-text">',
-                    content,
-                    ' <span class="iconfont  icon-bofang" title="播放"></span>',
+                    dialogContent,
+                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playContent(\'' + parseContent  +'\')"></span>',
                     '</div>',
                     '</li>'
                 ].join("");
@@ -172,7 +174,7 @@ window.CHAT = {
         }
         //如果是鲜花
         else if (cmd == "FLOWER") {
-            CHAT.addSystemTip(content);
+            CHAT.addSystemTip(dialogContent);
             //鲜花特效
             $(document).snowfall('clear');
             $(document).snowfall({
@@ -192,8 +194,8 @@ window.CHAT = {
 
     },
     //添加系统提示
-    addSystemTip: function (content) {
-        var _li = '<li class="cy-chat-system"><span>' + content + '</span></li>'
+    addSystemTip: function (dialogContent) {
+        var _li = '<li class="cy-chat-system"><span>' + dialogContent + '</span></li>'
         $(".cy-chat-main ul").append(_li);
         CHAT.scrollToBottom();
     },
@@ -283,15 +285,15 @@ window.CHAT = {
                 if (!window.WebSocket) {
                     return;
                 }
-                if (CHAT.socket.readyState == WebSocket.OPEN) {
+                if (CHAT.socket.readyState === WebSocket.OPEN) {
                     var _img = "<img src='" + this.result + "'>";
-                    if (_img.length > 65536) {
-                        layui.use('layer', function () {
-                            var layer = layui.layer;
-                            layer.msg("文件过大！");
-                        });
-                        return;
-                    }
+                    // if (_img.length > 65536) {
+                    //     layui.use('layer', function () {
+                    //         var layer = layui.layer;
+                    //         layer.msg("文件过大！");
+                    //     });
+                    //     return;
+                    // }
                     //自定义消息格式 [CHAT][时间戳][username][头像][消息内容]
                     var msg = ("[CHAT][" + new Date().getTime() + "]" + "[" + CHAT.username + "][" + CHAT.headPic + "] - " + _img);
                     CHAT.send(msg);
@@ -310,4 +312,15 @@ window.CHAT = {
     logout: function () {
         window.location.href = "/login";
     },
+    //播放对话内容
+    playContent: function (text) {
+        // // console.log("hi");
+        // // dialogContent = dialogContent.replaceAll("<br\/>", "");
+        console.log(text);
+        var utterThis = new window.SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(utterThis);
+        // $.get("http://localhost:8001/speech/test", {'name' : 'guilin'}, function (data) {
+        //     console.log(data);
+        // });
+    }
 };

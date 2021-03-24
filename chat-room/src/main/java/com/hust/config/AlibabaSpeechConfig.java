@@ -2,7 +2,10 @@ package com.hust.config;
 
 public class AlibabaSpeechConfig {
     public static final String APP_KEY = "i3HQ1XUjTxw69x10";
-    public static final String TOKEN = "bb1b457837074610a6e6ce1582a6b92c";
-    public static final String URL = "wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1"; // 默认即可，默认值：wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1
 
+    // 这个有过期时间，最好通过设置请求动态获取token
+    public static final String TOKEN = "fdebf48208044344bde6a1d8c77d5598";
+
+    // 默认即可，默认值：wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1
+    public static final String URL = "wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1";
 }

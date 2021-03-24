@@ -68,7 +68,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         }
 
         // 正常WebSocket的Http连接请求，构造握手响应返回
-        WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory("ws://" + request.headers().get(HttpHeaders.Names.HOST), null, false);
+        WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory("ws://" + request.headers().get(HttpHeaders.Names.HOST), null, false, 65536 * 10);
         handShaker = wsFactory.newHandshaker(request);
         if (handShaker == null) { // 无法处理的websocket版本
             WebSocketServerHandshakerFactory.sendUnsupportedWebSocketVersionResponse(ctx.channel());
@@ -100,11 +100,18 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         // 二进制消息
         if (frame instanceof BinaryWebSocketFrame) {
             log.info("接收到二进制消息...");
+            // 语音消息
+            BinaryWebSocketFrame binary = (BinaryWebSocketFrame) frame;
+            ByteBuf buff = binary.content();
+            byte[] bytes = new byte[buff.readableBytes()];
+            buff.readBytes(bytes);
+
+            return;
         }
 
         // 当前只支持文本消息
         if (!(frame instanceof TextWebSocketFrame)) {
-            throw new UnsupportedOperationException("当前只支持文本消息，不支持二进制消息");
+            throw new UnsupportedOperationException("当前只支持文本消息");
         }
         String msg = ((TextWebSocketFrame) frame).text();
         // 处理来自客户端的WebSocket请求

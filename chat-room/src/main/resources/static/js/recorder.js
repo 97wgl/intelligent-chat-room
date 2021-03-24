@@ -60,7 +60,7 @@ if (navigator.mediaDevices.getUserMedia) {
                 var blob = new Blob(chunks, {type: "audio/ogg; codecs=opus"});
                 chunks = [];
                 if (recordState === 1) {
-                    player.src = window.URL.createObjectURL(blob);
+                    // player.src = window.URL.createObjectURL(blob);
                     recordState = 0;
                     CHAT.send(blob);
                 }
