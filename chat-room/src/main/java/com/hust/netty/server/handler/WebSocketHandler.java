@@ -9,6 +9,10 @@ import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 @ChannelHandler.Sharable
 @Slf4j
 public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
@@ -102,10 +106,15 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             log.info("接收到二进制消息...");
             // 语音消息
             BinaryWebSocketFrame binary = (BinaryWebSocketFrame) frame;
-            ByteBuf buff = binary.content();
-            byte[] bytes = new byte[buff.readableBytes()];
-            buff.readBytes(bytes);
-
+            ByteBuf buffer = frame.content().retain();
+            String path = System.getProperty("user.dir");
+            try (FileOutputStream outputStream = new FileOutputStream(path + System.currentTimeMillis() + ".wav")) {
+                if (buffer.isReadable()) {
+                    buffer.readBytes(outputStream, buffer.readableBytes());
+                }
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
             return;
         }
 
