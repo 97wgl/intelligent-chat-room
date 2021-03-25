@@ -8,4 +8,8 @@ public class AlibabaSpeechConfig {
 
     // 默认即可，默认值：wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1
     public static final String URL = "wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1";
+
+    public static final String ACCESS_KEY_SECRET = "hg70kZY7P19CPMujL8InjyfdzQNZRg";
+
+    public static final String ACCESS_KEY_ID = "LTAI5t8Um8ryuhBzZZRtLACa";
 }

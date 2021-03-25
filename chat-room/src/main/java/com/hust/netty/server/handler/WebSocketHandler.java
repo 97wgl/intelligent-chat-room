@@ -1,6 +1,7 @@
 package com.hust.netty.server.handler;
 
 import com.hust.netty.process.MsgProcessor;
+import com.hust.service.SpeechRecognizerRestfulService;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -108,13 +109,16 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             BinaryWebSocketFrame binary = (BinaryWebSocketFrame) frame;
             ByteBuf buffer = frame.content().retain();
             String path = System.getProperty("user.dir");
-            try (FileOutputStream outputStream = new FileOutputStream(path + System.currentTimeMillis() + ".wav")) {
+            String filePath = path + "\\" + System.currentTimeMillis() + ".wav";
+            try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
                 if (buffer.isReadable()) {
                     buffer.readBytes(outputStream, buffer.readableBytes());
                 }
             } catch (IOException e) {
                 log.error(e.getMessage());
             }
+            String text = SpeechRecognizerRestfulService.process(filePath);
+            System.out.println(text);
             return;
         }
 
