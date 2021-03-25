@@ -13,10 +13,9 @@ import com.hust.netty.protocol.IMEncoder;
 import com.hust.netty.protocol.IMMessage;
 import com.hust.netty.protocol.IMP;
 import com.hust.util.comonent.SpringContextUtil;
-import com.ibm.watson.assistant.v2.model.CreateSessionOptions;
-import com.ibm.watson.assistant.v2.model.MessageResponse;
-import com.ibm.watson.assistant.v2.model.RuntimeResponseGeneric;
-import com.ibm.watson.assistant.v2.model.SessionResponse;
+import com.ibm.cloud.sdk.core.security.IamAuthenticator;
+import com.ibm.watson.assistant.v2.Assistant;
+import com.ibm.watson.assistant.v2.model.*;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -77,17 +76,21 @@ public class MsgProcessor {
             client.attr(HEAD_PIC).getAndSet(request.getHeadPic());
             // 将当前用户添加进在线用户列表
             onlineUsers.add(client);
+            IamAuthenticator authenticator = new IamAuthenticator(ClassFirstConfig.API_KEY);
+            Assistant assistant = new Assistant("2020-11-30", authenticator);
+            assistant.setServiceUrl(ClassFirstConfig.SERVICE_URL);
             SessionResponse watsonSession = null;
             // 创建watson助手的session
             while (watsonSession == null) {
                 try {
                     CreateSessionOptions sessionOptions = new CreateSessionOptions.Builder(ClassFirstConfig.ASSISTANT_ID).build();
-                    watsonSession = WatsonService.ASSISTANT.createSession(sessionOptions).execute().getResult();
+                    watsonSession = assistant.createSession(sessionOptions).execute().getResult();
                 } catch (Exception e) {
                     log.error(e.getMessage());
+                    // e.printStackTrace();
                 }
                 try {
-                    Thread.sleep(300);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

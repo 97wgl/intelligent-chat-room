@@ -118,7 +118,15 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                 log.error(e.getMessage());
             }
             String text = SpeechRecognizerRestfulService.process(filePath);
-            System.out.println(text);
+            // System.out.println(text);
+            File file = new File(filePath);
+            boolean deleted = file.delete();
+            if (!deleted) {
+                log.error(filePath + "删除失败！");
+            } else {
+                log.info("临时文件" + filePath + "删除成功！");
+            }
+            process.process(ctx.channel(), text);
             return;
         }
 

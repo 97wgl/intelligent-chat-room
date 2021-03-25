@@ -9,8 +9,8 @@ import java.util.UUID;
 
 public class WatsonService {
     
-    private final static IamAuthenticator AUTHENTICATOR = new IamAuthenticator(ClassFirstConfig.API_KEY);
-    public final static Assistant ASSISTANT = new Assistant(ClassFirstConfig.VERSION_DATE, AUTHENTICATOR);
+    private static IamAuthenticator AUTHENTICATOR = new IamAuthenticator(ClassFirstConfig.API_KEY);
+    public static Assistant ASSISTANT = new Assistant(ClassFirstConfig.VERSION_DATE, AUTHENTICATOR);
 
     static {
         ASSISTANT.setServiceUrl(ClassFirstConfig.SERVICE_URL);

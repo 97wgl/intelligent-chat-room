@@ -1,5 +1,5 @@
 const recordBtn = document.querySelector(".record-btn");
-const player = document.querySelector(".audio-player");
+// const player = document.querySelector(".audio-player");
 
 if (navigator.mediaDevices.getUserMedia) {
     var chunks = [];
@@ -8,9 +8,11 @@ if (navigator.mediaDevices.getUserMedia) {
     var recordState = 0; // 1：正常结束  2：取消
     navigator.mediaDevices.getUserMedia(constraints).then(
         stream => {
-            console.log("授权成功！");
 
-            const mediaRecorder = new MediaRecorder(stream);
+            console.log("授权成功！");
+            const mediaRecorder = new MediaRecorder(stream, {
+                "sampleRate": 16000
+            });
 
             recordBtn.onclick = () => {
                 console.log(mediaRecorder.state);
@@ -57,7 +59,7 @@ if (navigator.mediaDevices.getUserMedia) {
             };
 
             mediaRecorder.onstop = e => {
-                var blob = new Blob(chunks, {type: "audio/ogg; codecs=opus"});
+                var blob = new Blob(chunks, {type: "audio/ogg; codecs=pcm"});
                 chunks = [];
                 if (recordState === 1) {
                     // player.src = window.URL.createObjectURL(blob);
