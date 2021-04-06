@@ -334,7 +334,7 @@ window.CHAT = {
         // // dialogContent = dialogContent.replaceAll("<br\/>", "");
         // console.log(text);
         var settings = {
-            "url": "HTTP://127.0.0.1:8001/speech/tts",
+            "url": "/speech/tts",
             "method": "POST",
             "timeout": 0,
             "headers": {

@@ -83,6 +83,22 @@
 </body>
 <!-- 【3】实现录音逻辑 -->
 <script>
+
+    if (navigator.mediaDevices.getUserMedia) {
+        var chunks = [];
+        const constraints = {audio: true};
+        // var recordLayerMsg;
+        navigator.mediaDevices.getUserMedia(constraints).then(
+            stream => {
+                console.log("授权成功！");
+            },
+            () => {
+                console.error("授权失败！");
+            }
+        );
+    } else {
+        console.error("浏览器不支持 getUserMedia");
+    }
     var rec, wave, recBlob;
     /**调用open打开录音请求好录音权限**/
     var recOpen = function () {//一般在显示出录音按钮或相关的录音界面时进行此方法调用，后面用户点击开始录音时就能畅通无阻了

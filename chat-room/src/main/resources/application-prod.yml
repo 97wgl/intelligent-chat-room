@@ -25,5 +25,5 @@ spring:
 file:
   staticAccessPath: /upload/**
   #文件上传目录（注意Linux和Windows上的目录结构不同）
-  uploadFolder=/home/wgl/projectdata/chat/upload/
+  uploadFolder: /home/wgl/projectdata/chat/upload/
   # uploadFolder: E://projectdata//chat//upload/
