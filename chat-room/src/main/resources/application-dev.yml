@@ -21,3 +21,9 @@ spring:
     filters: stat,wall,log4j2 #配置扩展插件，常用的插件有=>stat:监控统计  log4j:日志  wall:防御sql注入
     connectionProperties: 'druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000' #慢SQL记录
     logSlowSql: true #是否打印sql
+
+file:
+  staticAccessPath: /upload/**
+  #文件上传目录（注意Linux和Windows上的目录结构不同）
+  #file.uploadFolder=/root/uploadFiles/
+  uploadFolder: E://projectdata//chat//upload/

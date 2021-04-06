@@ -38,7 +38,7 @@ public class MsgProcessor {
     private static final ChannelGroup onlineUsers = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
     // 每一个客户端对应一个Watson的Session
     // private static final ConcurrentHashMap<Channel, SessionResponse> clientSessionMap = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Channel, SessionResponseCounterPair> clientSession = new ConcurrentHashMap<>();
+    protected static final ConcurrentHashMap<Channel, SessionResponseCounterPair> clientSession = new ConcurrentHashMap<>();
     // channel自定义属性
     private final AttributeKey<String> USERNAME = AttributeKey.valueOf("username");
     private final AttributeKey<String> HEAD_PIC = AttributeKey.valueOf("headPic");
@@ -52,7 +52,7 @@ public class MsgProcessor {
     protected static volatile boolean studentReplied = false;
     // 虚拟教师对话角色
     private final static IMMessage teacherResponse = new IMMessage(IMP.CHAT.getName(), "虚拟教师", "https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207204353.png");
-
+    // 对话API
     private static final DialogLibraryService dialogLibraryService;
 
     static {
@@ -87,7 +87,7 @@ public class MsgProcessor {
                     watsonSession = assistant.createSession(sessionOptions).execute().getResult();
                 } catch (Exception e) {
                     log.error(e.getMessage());
-                    // e.printStackTrace();
+//                    e.printStackTrace();
                 }
                 try {
                     Thread.sleep(500);
@@ -350,6 +350,7 @@ class AssistantReplyTask implements Runnable {
     @SneakyThrows
     @Override
     public void run() {
+        SessionResponseCounterPair sessionResponseCounterPair = MsgProcessor.clientSession.get(session);
         while (true) {
             Thread.sleep(200);
             time.getAndIncrement();
@@ -357,7 +358,9 @@ class AssistantReplyTask implements Runnable {
                 break;
             }
             if (time.get() >= WAIT_TIME) {
-                if (!MsgProcessor.studentReplied && ClassOneData.data.containsKey(dialogCounter)) {
+                // 对话逻辑中学伴应该响应 && 学生未响应 && 学伴在此轮对话中未响应
+                if (ClassOneData.data.containsKey(dialogCounter) && !MsgProcessor.studentReplied
+                        && !sessionResponseCounterPair.getAssistantReplySet().contains(dialogCounter)) {
                     IMMessage assistantResponse = new IMMessage(IMP.CHAT.getName(), MsgProcessor.sysTime(), "学伴");
                     // 调用学伴回答库进行响应
                     assistantResponse.setContent(dialogLibraryService.getOne(
@@ -365,7 +368,7 @@ class AssistantReplyTask implements Runnable {
 
                     assistantResponse.setHeadPic("https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207200240.jpeg");
                     session.writeAndFlush(new TextWebSocketFrame(new IMEncoder().encode(assistantResponse)));
-
+                    sessionResponseCounterPair.getAssistantReplySet().add(dialogCounter);
                 }
                 break;
             }

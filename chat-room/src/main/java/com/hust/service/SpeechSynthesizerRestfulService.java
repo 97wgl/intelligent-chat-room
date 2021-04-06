@@ -8,13 +8,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 
 public class SpeechSynthesizerRestfulService {
     private static String accessToken;
     private static String appkey;
     private static final String format = "wav";
     private static final int sampleRate = 16000;
-    private static final String voiceType = "siyue";
+    private static final String voiceType = "Annie"; // 虚拟老师用的"Annie"，虚拟学伴是儿童音“Aiwei”
 
     static {
         appkey = AlibabaSpeechConfig.APP_KEY;
@@ -38,6 +39,7 @@ public class SpeechSynthesizerRestfulService {
          * 4.设置必须请求参数：appkey、token、text、format、sample_rate
          * 5.设置可选请求参数：voice、volume、speech_rate、pitch_rate
          */
+        // System.out.println(text);
         String url = "https://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/tts";
         url = url + "?appkey=" + appkey;
         url = url + "&token=" + accessToken;
@@ -53,7 +55,7 @@ public class SpeechSynthesizerRestfulService {
         // url = url + "&speech_rate=" + String.valueOf(0);
         // pitch_rate 语调，范围是-500~500，可选，默认是0
         // url = url + "&pitch_rate=" + String.valueOf(0);
-        System.out.println("URL: " + url);
+        // System.out.println("URL: " + url);
         /**
          * 发送HTTPS GET请求，处理服务端的响应
          */
@@ -62,20 +64,20 @@ public class SpeechSynthesizerRestfulService {
             long start = System.currentTimeMillis();
             OkHttpClient client = new OkHttpClient();
             Response response = client.newCall(request).execute();
-            System.out.println("total latency :" + (System.currentTimeMillis() - start) + " ms");
-            System.out.println(response.headers().toString());
+            // System.out.println("total latency :" + (System.currentTimeMillis() - start) + " ms");
+            // System.out.println(response.headers().toString());
             String contentType = response.header("Content-Type");
             if ("audio/mpeg".equals(contentType)) {
                 File f = new File(audioSaveFile);
                 FileOutputStream fout = new FileOutputStream(f);
                 fout.write(response.body().bytes());
                 fout.close();
-                System.out.println("The GET request succeed!");
+                // System.out.println("The GET request succeed!");
             }
             else {
                 // ContentType 为 null 或者为 "application/json"
                 String errorMessage = response.body().string();
-                System.out.println("The GET request failed: " + errorMessage);
+                // System.out.println("The GET request failed: " + errorMessage);
             }
             response.close();
         } catch (Exception e) {
@@ -158,8 +160,12 @@ public class SpeechSynthesizerRestfulService {
         processGETRequet(textUrlEncode(text), fileName, format, sampleRate, voiceType);
     }
 
+    public static void request(String text, String fileName, String type) {
+        processGETRequet(textUrlEncode(text), fileName, format, sampleRate, type);
+    }
+
     public static void main(String[] args) {
-        String text = "你好，大家好！hello";
-        request(text, "tts_" + System.currentTimeMillis() + ".wav");
+        String text = "你好";
+        request(text,LocalDate.now() + "_tts_" + System.currentTimeMillis() + ".wav", "sitong");
     }
 }

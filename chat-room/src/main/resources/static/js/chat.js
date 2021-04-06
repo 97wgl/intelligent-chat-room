@@ -88,7 +88,6 @@ window.CHAT = {
     },
     //将消息添加到聊天面板
     appendToPanel: function (message) {
-        console.log(message);
         var regx = /^\[(.*)\](\s\-\s(.*))?/g;
         var group = '', label = "", dialogContent = "", cmd = "", time = 0, name = "", headPic = "";
         while (group = regx.exec(message)) {
@@ -112,7 +111,6 @@ window.CHAT = {
         //如果是聊天信息
         else if (cmd === "CHAT") {
             var parseContent = dialogContent.replaceAll("<br/>", " ").replaceAll("\n", "").replaceAll("\'", "\\'");
-            console.log("parse: " + parseContent);
             var date = $t.dateFormat(parseInt(time), "yyyy-MM-dd hh:mm:ss");
             //是否是自己
             var isMe = (name === "MY_SELF");
@@ -143,6 +141,7 @@ window.CHAT = {
                     '</div>',
                     '</li>'
                 ].join("");
+                CHAT.playContent(parseContent.replaceAll("\\", ""), "Annie");
             } else if (name.includes("学伴")) {
                 _li = [
                     '<li>',
@@ -156,6 +155,7 @@ window.CHAT = {
                     '</div>',
                     '</li>'
                 ].join("");
+                CHAT.playContent(parseContent.replaceAll("\\", ""), "Aiwei");
             } else {
                 _li = [
                     '<li>',
@@ -169,6 +169,7 @@ window.CHAT = {
                     '</div>',
                     '</li>'
                 ].join("");
+                CHAT.playContent(parseContent.replaceAll("\\", ""), "sitong");
             }
             $(".cy-chat-main ul").append(_li);
         }
@@ -186,7 +187,7 @@ window.CHAT = {
             window.flowerTimer = window.setTimeout(function () {
                 $(document).snowfall('clear');
                 window.clearTimeout(flowerTimer);
-            }, 5000);
+            }, 3000);
 
         }
         //有新的消息过来以后，自动切到最底部
@@ -199,23 +200,26 @@ window.CHAT = {
         $(".cy-chat-main ul").append(_li);
         CHAT.scrollToBottom();
     },
-    //发送聊天消息
+    //发送聊天板消息
     sendText: function () {
         var message = $("#sendMessage");
+        this.sendTextTool(message);
+        message.val("");
+        message.focus();
+    },
+    //发送聊天消息
+    sendTextTool: function (sendContent) {
         //去掉空格
-        if (message.val().replace(/\s/ig, "") == "") {
+        if (sendContent.val().replace(/\s/ig, "") === "") {
             return;
         }
         if (!window.WebSocket) {
             return;
         }
-        if (CHAT.socket.readyState == WebSocket.OPEN) {
+        if (CHAT.socket.readyState === WebSocket.OPEN) {
             //自定义消息格式 [CHAT][时间戳][username][头像][消息内容]
-            var msg = ("[CHAT][" + new Date().getTime() + "]" + "[" + CHAT.username + "][" + CHAT.headPic + "] - " + message.val().replace(/\n/ig, "<br/>"));
+            var msg = ("[CHAT][" + new Date().getTime() + "]" + "[" + CHAT.username + "][" + CHAT.headPic + "] - " + sendContent.val().replace(/\n/ig, "<br/>"));
             CHAT.send(msg);
-
-            message.val("");
-            message.focus();
         } else {
             layui.use('layer', function () {
                 var layer = layui.layer;
@@ -313,12 +317,48 @@ window.CHAT = {
         window.location.href = "/login";
     },
     //播放对话内容
-    playContent: function (text) {
+    playContent: function (text, type) {
+        if (localStorage.getItem(text)) {
+            var audio = document.createElement("audio");
+            audio.controls = true;
+            audio.style.visibility = 'hidden';
+            //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
+            audio.src = localStorage.getItem(text);
+            audio.play();
+            setTimeout(function () {
+                (window.URL || webkitURL).revokeObjectURL(audio.src);
+            }, 5000);
+            return;
+        }
         // // console.log("hi");
         // // dialogContent = dialogContent.replaceAll("<br\/>", "");
-        console.log(text);
-        var utterThis = new window.SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(utterThis);
+        // console.log(text);
+        var settings = {
+            "url": "HTTP://127.0.0.1:8001/speech/tts",
+            "method": "POST",
+            "timeout": 0,
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            "data": {
+                "text": text,
+                "type": type
+            }
+        };
+        $.ajax(settings).done(function (response) {
+            localStorage.setItem(text, response);
+            var audio = document.createElement("audio");
+            audio.controls = true;
+            audio.style.visibility = 'hidden';
+            //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
+            audio.src = response;
+            audio.play();
+            setTimeout(function () {
+                (window.URL || webkitURL).revokeObjectURL(audio.src);
+            }, 5000);
+        });
+        // var utterThis = new window.SpeechSynthesisUtterance(text);
+        // window.speechSynthesis.speak(utterThis);
         // $.get("http://localhost:8001/speech/test", {'name' : 'guilin'}, function (data) {
         //     console.log(data);
         // });

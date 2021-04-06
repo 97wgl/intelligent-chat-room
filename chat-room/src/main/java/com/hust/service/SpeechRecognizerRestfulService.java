@@ -1,7 +1,9 @@
 package com.hust.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONPath;
 import com.hust.config.AlibabaSpeechConfig;
+import com.hust.entity.ASRResponse;
 import com.hust.util.comonent.HttpUtil;
 
 import java.util.HashMap;
@@ -68,6 +70,7 @@ public class SpeechRecognizerRestfulService {
         String response = HttpUtil.sendPostFile(request, headers, fileName);
 
         if (response != null) {
+            ASRResponse asrResponse = JSONObject.parseObject(response, ASRResponse.class);
             System.out.println("Response: " + response);
             String result = JSONPath.read(response, "result").toString();
             System.out.println("识别结果：" + result);
@@ -81,7 +84,7 @@ public class SpeechRecognizerRestfulService {
 
     public static void main(String[] args) {
 
-        String fileName = "E:\\大数据实验室\\项目\\intelligent-chat-room\\chat-room\\tts_1616556377907.wav";
+        String fileName = "E:\\大数据实验室\\项目\\intelligent-chat-room\\chat-room\\97507510-5aab-45c0-b812-3d5719af152b.wav";
         System.out.println(process(fileName));;
     }
 }

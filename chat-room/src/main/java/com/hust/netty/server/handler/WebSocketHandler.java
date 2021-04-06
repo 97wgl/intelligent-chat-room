@@ -1,6 +1,8 @@
 package com.hust.netty.server.handler;
 
 import com.hust.netty.process.MsgProcessor;
+import com.hust.netty.protocol.IMMessage;
+import com.hust.netty.protocol.IMP;
 import com.hust.service.SpeechRecognizerRestfulService;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -104,9 +106,11 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         }
         // 二进制消息
         if (frame instanceof BinaryWebSocketFrame) {
+            IMMessage imMessage = new IMMessage();
+            imMessage.setTime(System.currentTimeMillis());
+            imMessage.setCmd(IMP.CHAT.getName());
             log.info("接收到二进制消息...");
             // 语音消息
-            BinaryWebSocketFrame binary = (BinaryWebSocketFrame) frame;
             ByteBuf buffer = frame.content().retain();
             String path = System.getProperty("user.dir");
             String filePath = path + "\\" + System.currentTimeMillis() + ".wav";
@@ -118,7 +122,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                 log.error(e.getMessage());
             }
             String text = SpeechRecognizerRestfulService.process(filePath);
-            // System.out.println(text);
+            System.out.println(text);
             File file = new File(filePath);
             boolean deleted = file.delete();
             if (!deleted) {
@@ -126,18 +130,17 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             } else {
                 log.info("临时文件" + filePath + "删除成功！");
             }
-            process.process(ctx.channel(), text);
+            imMessage.setContent(text);
+            process.process(ctx.channel(), imMessage.toString());
             return;
         }
 
-        // 当前只支持文本消息
+        // 文本消息
         if (!(frame instanceof TextWebSocketFrame)) {
             throw new UnsupportedOperationException("当前只支持文本消息");
         }
         String msg = ((TextWebSocketFrame) frame).text();
         // 处理来自客户端的WebSocket请求
-
-        //保存当前用户
         process.process(ctx.channel(), msg);
     }
 
