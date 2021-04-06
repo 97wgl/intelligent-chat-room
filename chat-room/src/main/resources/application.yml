@@ -4,7 +4,7 @@ server:
 # Freemarker 配置
 spring:
   profiles:
-    active: dev
+    active: prod
   freemarker:
     template-loader-path: classpath:/templates/
     suffix: .ftl
