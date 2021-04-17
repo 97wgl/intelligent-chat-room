@@ -30,7 +30,7 @@ public class SpeechSynthesizerRestfulService {
     /**
      * HTTPS GET 请求
      */
-    private static void processGETRequet(String text, String audioSaveFile, String format, int sampleRate, String voice) {
+    private static void processGETRequest(String text, String audioSaveFile, String format, int sampleRate, String voice) {
         /**
          * 设置HTTPS GET请求
          * 1.使用HTTPS协议
@@ -61,7 +61,6 @@ public class SpeechSynthesizerRestfulService {
          */
         Request request = new Request.Builder().url(url).get().build();
         try {
-            long start = System.currentTimeMillis();
             OkHttpClient client = new OkHttpClient();
             Response response = client.newCall(request).execute();
             // System.out.println("total latency :" + (System.currentTimeMillis() - start) + " ms");
@@ -77,9 +76,10 @@ public class SpeechSynthesizerRestfulService {
             else {
                 // ContentType 为 null 或者为 "application/json"
                 String errorMessage = response.body().string();
+                accessToken = SpeechTokenService.getToken();
+                processGETRequest(text, audioSaveFile, format, sampleRate, voice);
                 // System.out.println("The GET request failed: " + errorMessage);
             }
-            response.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -157,11 +157,11 @@ public class SpeechSynthesizerRestfulService {
     }
 
     public static void request(String text, String fileName) {
-        processGETRequet(textUrlEncode(text), fileName, format, sampleRate, voiceType);
+        processGETRequest(textUrlEncode(text), fileName, format, sampleRate, voiceType);
     }
 
     public static void request(String text, String fileName, String type) {
-        processGETRequet(textUrlEncode(text), fileName, format, sampleRate, type);
+        processGETRequest(textUrlEncode(text), fileName, format, sampleRate, type);
     }
 
     public static void main(String[] args) {

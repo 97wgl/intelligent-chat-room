@@ -2,6 +2,7 @@ package com.hust.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONPath;
+import com.aliyuncs.exceptions.ClientException;
 import com.hust.config.AlibabaSpeechConfig;
 import com.hust.entity.ASRResponse;
 import com.hust.util.comonent.HttpUtil;
@@ -38,8 +39,7 @@ public class SpeechRecognizerRestfulService {
          * 4.设置必选请求参数：appkey、format、sample_rate。
          * 5.设置可选请求参数：enable_punctuation_prediction、enable_inverse_text_normalization、enable_voice_detection。
          */
-        String url = "http://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/asr";
-        String request = url;
+        String request = "http://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/asr";
         request = request + "?appkey=" + appkey;
         request = request + "&format=" + format;
         request = request + "&sample_rate=" + sampleRate;
@@ -74,6 +74,12 @@ public class SpeechRecognizerRestfulService {
             System.out.println("Response: " + response);
             if (asrResponse.getStatus().equals(40000001)) {
                 // TODO 需要重新获取token
+                try {
+                    accessToken = SpeechTokenService.getToken();
+                } catch (ClientException e) {
+                    e.printStackTrace();
+                }
+                return process(fileName);
             }
             String result = JSONPath.read(response, "result").toString();
             System.out.println("识别结果：" + result);
