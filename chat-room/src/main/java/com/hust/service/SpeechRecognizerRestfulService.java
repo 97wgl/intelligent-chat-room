@@ -72,6 +72,9 @@ public class SpeechRecognizerRestfulService {
         if (response != null) {
             ASRResponse asrResponse = JSONObject.parseObject(response, ASRResponse.class);
             System.out.println("Response: " + response);
+            if (asrResponse.getStatus().equals(40000001)) {
+                // TODO 需要重新获取token
+            }
             String result = JSONPath.read(response, "result").toString();
             System.out.println("识别结果：" + result);
             return result;

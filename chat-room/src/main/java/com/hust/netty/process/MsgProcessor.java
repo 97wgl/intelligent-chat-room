@@ -87,7 +87,7 @@ public class MsgProcessor {
                     watsonSession = assistant.createSession(sessionOptions).execute().getResult();
                 } catch (Exception e) {
                     log.error(e.getMessage());
-//                    e.printStackTrace();
+                    e.printStackTrace();
                 }
                 try {
                     Thread.sleep(500);

@@ -28,22 +28,23 @@ public class SpeechController {
     public String asr(@RequestParam(value = "wavFile") MultipartFile multipartFile) {
         //新的文件名以日期命名
         String fileName = System.currentTimeMillis() + ".wav";
-        //获取项目根路径并转到static/videos
-        String path = Objects.requireNonNull(ClassUtils.getDefaultClassLoader().getResource("")).getPath() + "static/videos/";
-        File file = new File(path);
+        // 获取项目根路径并转到static/videos
+        // String path = Objects.requireNonNull(ClassUtils.getDefaultClassLoader().getResource("")).getPath() + "static/videos/";
+        File file = new File(uploadFilePath);
         String filePath = file + "\\" + fileName;
         //文件夹不存在就创建
         if (!file.exists()) {
             file.mkdirs();
         }
         //保存文件
+        File tempFile = new File(filePath);
         try {
-            multipartFile.transferTo(new File(filePath));
+            log.info("临时文件：" + filePath);
+            multipartFile.transferTo(tempFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
         String text = SpeechRecognizerRestfulService.process(filePath);
-        File tempFile = new File(filePath);
         boolean deleted = tempFile.delete();
         if (!deleted) {
             log.error(filePath + "删除失败！");
@@ -58,6 +59,7 @@ public class SpeechController {
     @ResponseBody
     public String tts(@RequestParam(value = "text") String text, @RequestParam(value = "type") String type) {
         String fileName = LocalDate.now() + "_tts_" + System.currentTimeMillis() + ".wav";
+        log.info("语音合成：" + fileName);
         SpeechSynthesizerRestfulService.request(text, uploadFilePath + fileName, type);
         return "/upload/" + fileName;
     }

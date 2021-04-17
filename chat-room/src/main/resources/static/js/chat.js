@@ -1,6 +1,7 @@
 //WebScoket初始化
 window.CHAT = {
-    serverAddr: "ws://" + window.location.hostname + ":8002/ws",
+    // serverAddr: "ws://" + window.location.hostname + ":8002/ws",
+    serverAddr: "wss://97wgl.cn/ws",
     socket: null,
     username: '',
     headPic: $t.getHeadPic(),
@@ -318,18 +319,19 @@ window.CHAT = {
     },
     //播放对话内容
     playContent: function (text, type) {
-        if (localStorage.getItem(text)) {
-            var audio = document.createElement("audio");
-            audio.controls = true;
-            audio.style.visibility = 'hidden';
-            //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
-            audio.src = localStorage.getItem(text);
-            audio.play();
-            setTimeout(function () {
-                (window.URL || webkitURL).revokeObjectURL(audio.src);
-            }, 5000);
-            return;
-        }
+
+        // if (sessionStorage.getItem(text)) {
+        //     var audio = document.createElement("audio");
+        //     audio.controls = true;
+        //     audio.style.visibility = 'hidden';
+        //     //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
+        //     audio.src = sessionStorage.getItem(text);
+        //     audio.play();
+        //     setTimeout(function () {
+        //         (window.URL || webkitURL).revokeObjectURL(audio.src);
+        //     }, 5000);
+        //     return;
+        // }
         // // console.log("hi");
         // // dialogContent = dialogContent.replaceAll("<br\/>", "");
         // console.log(text);
@@ -346,7 +348,7 @@ window.CHAT = {
             }
         };
         $.ajax(settings).done(function (response) {
-            localStorage.setItem(text, response);
+            // sessionStorage.setItem(text, response);
             var audio = document.createElement("audio");
             audio.controls = true;
             audio.style.visibility = 'hidden';
