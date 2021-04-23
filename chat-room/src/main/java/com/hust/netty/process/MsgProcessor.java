@@ -128,9 +128,10 @@ public class MsgProcessor {
         }
         // 聊天动作
         else if (IMP.CHAT.getName().equals(request.getCmd())) {
-            synchronized (MsgProcessor.class) {
-                studentReplied = true;
+//            synchronized (MsgProcessor.class) {
+                // TODO 将这个改为map
                 SessionResponseCounterPair pair = clientSession.get(client);
+                pair.getStuRepliedMap().put(pair.getDialogCounter(), true);
                 // 调用IBM Watson
                 teacherResponse.setTime(sysTime());
                 MessageResponse messageResponse = WatsonService.requestOfText(request.getContent(), pair.getSessionResponse());
@@ -169,9 +170,8 @@ public class MsgProcessor {
                     channel.writeAndFlush(new TextWebSocketFrame(text));
                     channel.writeAndFlush(new TextWebSocketFrame(sysText));
                 }
-                studentReplied = false;
                 new Thread(new AssistantReplyTask(client, pair.getDialogCounter(), 1)).start();
-            }
+//            }
         }
         // 鲜花动作
         else if (IMP.FLOWER.getName().equals(request.getCmd())) {
@@ -330,7 +330,7 @@ class AssistantReplyTask implements Runnable {
     }
 
     // 学伴等待响应时间：WAIT_TIME * 0.2（s）
-    private static final int WAIT_TIME = 25;
+    private static final int WAIT_TIME = 50;
 
     private final Channel session;
 
@@ -354,12 +354,12 @@ class AssistantReplyTask implements Runnable {
         while (true) {
             Thread.sleep(200);
             time.getAndIncrement();
-            if (MsgProcessor.studentReplied) {
+            if (sessionResponseCounterPair.getStuRepliedMap().containsKey(sessionResponseCounterPair.getDialogCounter()) && sessionResponseCounterPair.getStuRepliedMap().get(sessionResponseCounterPair.getDialogCounter())) {
                 break;
             }
             if (time.get() >= WAIT_TIME) {
                 // 对话逻辑中学伴应该响应 && 学生未响应 && 学伴在此轮对话中未响应
-                if (ClassOneData.data.containsKey(dialogCounter) && !MsgProcessor.studentReplied
+                if (ClassOneData.data.containsKey(dialogCounter)
                         && !sessionResponseCounterPair.getAssistantReplySet().contains(dialogCounter)) {
                     IMMessage assistantResponse = new IMMessage(IMP.CHAT.getName(), MsgProcessor.sysTime(), "学伴");
                     // 调用学伴回答库进行响应
