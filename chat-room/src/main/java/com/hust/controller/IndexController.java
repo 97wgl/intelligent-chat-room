@@ -33,9 +33,4 @@ public class IndexController {
         return "index/chat";
     }
 
-    @RequestMapping("ws")
-    public String ws() {
-        return "index/ws";
-    }
-
 }
