@@ -9,10 +9,8 @@
 - 阿里语音合成sdk
 - IBM Watson sdk
 
-## 项目结构
-
-│  **chat-room**
-│  
+## 项目结构 
+│  **chat-room**│  
 └─com.hust
 │  AdminApplication.java
 │  Generate.java
