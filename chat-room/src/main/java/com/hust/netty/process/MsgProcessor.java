@@ -128,50 +128,47 @@ public class MsgProcessor {
         }
         // 聊天动作
         else if (IMP.CHAT.getName().equals(request.getCmd())) {
-//            synchronized (MsgProcessor.class) {
-                // TODO 将这个改为map
-                SessionResponseCounterPair pair = clientSession.get(client);
-                pair.getStuRepliedMap().put(pair.getDialogCounter(), true);
-                // 调用IBM Watson
-                teacherResponse.setTime(sysTime());
-                MessageResponse messageResponse = WatsonService.requestOfText(request.getContent(), pair.getSessionResponse());
-                // 没有识别到意图
-                if (messageResponse.getOutput().getIntents().size() == 0 && messageResponse.getOutput().getEntities().size() == 0) {
-                    pair.setRepeatResponseCounter(pair.getRepeatResponseCounter() + 1);
-                    log.info("没有识别到意图，计数器加1, 当前计数为" + pair.getRepeatResponseCounter());
-                    if (pair.getRepeatResponseCounter() > 3) {
-                        messageResponse = WatsonService.requestOfText(dialogLibraryService.getOne(
-                                new QueryWrapper<DialogLibrary>().eq("class_id", 1).eq("round_no", pair.getDialogCounter())).getAssistantReply(), pair.getSessionResponse());
-                        log.info("计数器大于3，跳转到下一轮对话");
-                        pair.setDialogCounter(pair.getDialogCounter() + 1);
-                        pair.setRepeatResponseCounter(0);
-                    }
-                } else {
+            SessionResponseCounterPair pair = clientSession.get(client);
+            pair.getStuRepliedMap().put(pair.getDialogCounter(), true);
+            // 调用IBM Watson
+            teacherResponse.setTime(sysTime());
+            MessageResponse messageResponse = WatsonService.requestOfText(request.getContent(), pair.getSessionResponse());
+            // 没有识别到意图
+            if (messageResponse.getOutput().getIntents().size() == 0 && messageResponse.getOutput().getEntities().size() == 0) {
+                pair.setRepeatResponseCounter(pair.getRepeatResponseCounter() + 1);
+                log.info("没有识别到意图，计数器加1, 当前计数为" + pair.getRepeatResponseCounter());
+                if (pair.getRepeatResponseCounter() > 3) {
+                    messageResponse = WatsonService.requestOfText(dialogLibraryService.getOne(
+                            new QueryWrapper<DialogLibrary>().eq("class_id", 1).eq("round_no", pair.getDialogCounter())).getAssistantReply(), pair.getSessionResponse());
+                    log.info("计数器大于3，跳转到下一轮对话");
                     pair.setDialogCounter(pair.getDialogCounter() + 1);
+                    pair.setRepeatResponseCounter(0);
                 }
-                teacherResponse.setContent(buildResponseText(messageResponse));
-                // 如果当前在线用户数大于1，则在消息后面加一个@符号
-                if (onlineUsers.size() > 1) {
-                    teacherResponse.setContent(teacherResponse.getContent() + " @" + request.getSender());
+            } else {
+                pair.setDialogCounter(pair.getDialogCounter() + 1);
+            }
+            teacherResponse.setContent(buildResponseText(messageResponse));
+            // 如果当前在线用户数大于1，则在消息后面加一个@符号
+            if (onlineUsers.size() > 1) {
+                teacherResponse.setContent(teacherResponse.getContent() + " @" + request.getSender());
+            }
+            String sysText = encoder.encode(teacherResponse);
+            // System.out.println(sysText);
+            for (Channel channel : onlineUsers) {
+                // 向其他人发送消息
+                if (channel != client) {
+                    request.setSender(username);
                 }
-                String sysText = encoder.encode(teacherResponse);
-                // System.out.println(sysText);
-                for (Channel channel : onlineUsers) {
-                    // 向其他人发送消息
-                    if (channel != client) {
-                        request.setSender(username);
-                    }
-                    // 向自己发送消息
-                    else {
-                        request.setSender("MY_SELF");
-                    }
-                    // 发送消息
-                    String text = encoder.encode(request);
-                    channel.writeAndFlush(new TextWebSocketFrame(text));
-                    channel.writeAndFlush(new TextWebSocketFrame(sysText));
+                // 向自己发送消息
+                else {
+                    request.setSender("MY_SELF");
                 }
-                new Thread(new AssistantReplyTask(client, pair.getDialogCounter(), 1)).start();
-//            }
+                // 发送消息
+                String text = encoder.encode(request);
+                channel.writeAndFlush(new TextWebSocketFrame(text));
+                channel.writeAndFlush(new TextWebSocketFrame(sysText));
+            }
+            new Thread(new AssistantReplyTask(client, pair.getDialogCounter(), 1)).start();
         }
         // 鲜花动作
         else if (IMP.FLOWER.getName().equals(request.getCmd())) {
@@ -307,6 +304,7 @@ public class MsgProcessor {
 
     /**
      * 获取当前系统时间
+     *
      * @return 系统时间
      */
     protected static long sysTime() {
