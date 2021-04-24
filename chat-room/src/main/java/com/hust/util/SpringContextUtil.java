@@ -1,4 +1,4 @@
-package com.hust.util.comonent;
+package com.hust.util;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;

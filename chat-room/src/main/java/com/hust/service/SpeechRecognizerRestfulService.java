@@ -5,7 +5,7 @@ import com.alibaba.fastjson.JSONPath;
 import com.aliyuncs.exceptions.ClientException;
 import com.hust.config.AlibabaSpeechConfig;
 import com.hust.entity.ASRResponse;
-import com.hust.util.comonent.HttpUtil;
+import com.hust.util.HttpUtil;
 
 import java.util.HashMap;
 

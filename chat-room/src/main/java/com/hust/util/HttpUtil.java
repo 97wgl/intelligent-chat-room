@@ -1,4 +1,4 @@
-package com.hust.util.comonent;
+package com.hust.util;
 
 import okhttp3.*;
 import java.io.File;

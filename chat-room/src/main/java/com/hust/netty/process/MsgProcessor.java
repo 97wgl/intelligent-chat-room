@@ -12,7 +12,7 @@ import com.hust.netty.protocol.IMDecoder;
 import com.hust.netty.protocol.IMEncoder;
 import com.hust.netty.protocol.IMMessage;
 import com.hust.netty.protocol.IMP;
-import com.hust.util.comonent.SpringContextUtil;
+import com.hust.util.SpringContextUtil;
 import com.ibm.cloud.sdk.core.security.IamAuthenticator;
 import com.ibm.watson.assistant.v2.Assistant;
 import com.ibm.watson.assistant.v2.model.*;
@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 消息处理类
