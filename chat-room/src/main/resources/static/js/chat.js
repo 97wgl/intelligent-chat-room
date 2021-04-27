@@ -5,6 +5,8 @@ window.CHAT = {
     socket: null,
     username: '',
     headPic: $t.getHeadPic(),
+    voiceQueue: new Array(),
+    currPlayAudio: null,
     //将滚动条设置到最顶部，以便能看到最新的消息
     scrollToBottom: function () {
         $(".cy-chat-main").scrollTop($(".cy-chat-main")[0].scrollHeight);
@@ -130,6 +132,10 @@ window.CHAT = {
                     '</li>'
                 ].join("");
             } else if (name.includes("老师") || name.includes("教师")) {
+                CHAT.voiceQueue.push({
+                    'content': parseContent,
+                    'type': "Annie"
+                });
                 _li = [
                     '<li>',
                     '<div class="cy-chat-user">',
@@ -142,8 +148,12 @@ window.CHAT = {
                     '</div>',
                     '</li>'
                 ].join("");
-                CHAT.playTeacherContent(parseContent.replaceAll("\\", ""));
+                CHAT.playTeacherContent(parseContent);
             } else if (name.includes("学伴")) {
+                CHAT.voiceQueue.push({
+                    'content': parseContent,
+                    'type': "Aiwei"
+                });
                 _li = [
                     '<li>',
                     '<div class="cy-chat-user">',
@@ -156,7 +166,7 @@ window.CHAT = {
                     '</div>',
                     '</li>'
                 ].join("");
-                CHAT.playAssistantContent(parseContent.replaceAll("\\", ""));
+                CHAT.playAssistantContent(parseContent);
             } else {
                 _li = [
                     '<li>',
@@ -166,11 +176,16 @@ window.CHAT = {
                     ' </div>',
                     ' <div class="cy-chat-text">',
                     dialogContent,
-                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playOthersContent(\'' + parseContent  +'\')"></span>',
                     '</div>',
                     '</li>'
+                    // ' </div>',
+                    // ' <div class="cy-chat-text">',
+                    // dialogContent,
+                    // ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playOthersContent(\'' + parseContent  +'\')"></span>',
+                    // '</div>',
+                    // '</li>'
                 ].join("");
-                CHAT.playOthersContent(parseContent.replaceAll("\\", ""));
+                // CHAT.playOthersContent(parseContent);
             }
             $(".cy-chat-main ul").append(_li);
         }
@@ -204,7 +219,7 @@ window.CHAT = {
     //发送聊天板消息
     sendText: function () {
         var message = $("#sendMessage");
-        this.sendTextTool(message);
+        CHAT.sendTextTool(message);
         message.val("");
         message.focus();
     },
@@ -279,27 +294,19 @@ window.CHAT = {
     },
     //发送图片
     sendPic: function (e) {
-        console.info(e.target.files[0]);//图片文件
+        // console.info(e.target.files[0]);//图片文件
         var dom = $("#fileBtn")[0];
-        console.info(dom.value);//这个是文件的路径
-        console.log(e.target.value);//这个也是文件的路径和上面的dom.value是一样的
+        // console.info(dom.value);//这个是文件的路径
+        // console.log(e.target.value);//这个也是文件的路径和上面的dom.value是一样的
         var reader = new FileReader();
         reader.onload = (function (file) {
             return function (e) {
-                console.info(this.result); //这个就是base64的数据了
+                // console.info(this.result); //这个就是base64的数据了
                 if (!window.WebSocket) {
                     return;
                 }
                 if (CHAT.socket.readyState === WebSocket.OPEN) {
-                    var _img = "<img src='" + this.result + "'>";
-                    // if (_img.length > 65536) {
-                    //     layui.use('layer', function () {
-                    //         var layer = layui.layer;
-                    //         layer.msg("文件过大！");
-                    //     });
-                    //     return;
-                    // }
-                    //自定义消息格式 [CHAT][时间戳][username][头像][消息内容]
+                    var _img = "<img src='" + CHAT.result + "'>";
                     var msg = ("[CHAT][" + new Date().getTime() + "]" + "[" + CHAT.username + "][" + CHAT.headPic + "] - " + _img);
                     CHAT.send(msg);
                 } else {
@@ -317,61 +324,59 @@ window.CHAT = {
     logout: function () {
         window.location.href = "/login";
     },
+    playAudio: function (audioSrc) {
+        CHAT.currPlayAudio = document.createElement("audio");
+        CHAT.currPlayAudio.controls = true;
+        CHAT.currPlayAudio.style.visibility = 'hidden';
+        //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
+        CHAT.currPlayAudio.src = audioSrc;
+        CHAT.currPlayAudio.addEventListener("ended", function () {
+            console.log("播放结束")
+            CHAT.currPlayAudio = null;
+            if (CHAT.voiceQueue.length > 0) {
+                var temp = CHAT.voiceQueue[0];
+                // console.log(temp);
+                if (typeof temp !== "undefined") {
+                    CHAT.playContent(temp.content, temp.type);
+                }
+            }
+        });
+        CHAT.currPlayAudio.play();
+    },
     //播放对话内容
     playContent: function (text, type) {
-
-        if (sessionStorage.getItem(text)) {
-            var audio = document.createElement("audio");
-            audio.controls = true;
-            audio.style.visibility = 'hidden';
-            //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
-            audio.src = sessionStorage.getItem(text);
-            audio.play();
-            setTimeout(function () {
-                (window.URL || webkitURL).revokeObjectURL(audio.src);
-            }, 5000);
-            return;
-        }
-        // // console.log("hi");
-        // // dialogContent = dialogContent.replaceAll("<br\/>", "");
-        // console.log(text);
-        var settings = {
-            "url": "/speech/tts",
-            "method": "POST",
-            "timeout": 0,
-            "headers": {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            "data": {
-                "text": text,
-                "type": type
+        text = text.replaceAll("\\", "");
+        if (CHAT.currPlayAudio == null) {
+            CHAT.voiceQueue.shift();
+            if (sessionStorage.getItem(text)) {
+                CHAT.playAudio(sessionStorage.getItem(text));
+                return;
             }
-        };
-        $.ajax(settings).done(function (response) {
-            sessionStorage.setItem(text, response);
-            var audio = document.createElement("audio");
-            audio.controls = true;
-            audio.style.visibility = 'hidden';
-            //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
-            audio.src = response;
-            audio.play();
-            setTimeout(function () {
-                (window.URL || webkitURL).revokeObjectURL(audio.src);
-            }, 5000);
-        });
-        // var utterThis = new window.SpeechSynthesisUtterance(text);
-        // window.speechSynthesis.speak(utterThis);
-        // $.get("http://localhost:8001/speech/test", {'name' : 'guilin'}, function (data) {
-        //     console.log(data);
-        // });
+            var settings = {
+                "url": "/speech/tts",
+                "method": "POST",
+                "timeout": 0,
+                "headers": {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "data": {
+                    "text": text,
+                    "type": type
+                }
+            };
+            $.ajax(settings).done(function (response) {
+                sessionStorage.setItem(text, response);
+                CHAT.playAudio(response);
+            });
+        }
     },
     playTeacherContent: function (text) {
-        this.playContent(text, "Annie");
+        CHAT.playContent(text, "Annie");
     },
     playAssistantContent: function (text) {
-        this.playContent(text, "Aiwei");
+        CHAT.playContent(text, "Aiwei");
     },
     playOthersContent: function (text) {
-        this.playContent(text, "sitong");
+        CHAT.playContent(text, "sitong");
     }
 };
