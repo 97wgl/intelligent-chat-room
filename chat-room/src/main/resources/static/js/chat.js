@@ -138,11 +138,11 @@ window.CHAT = {
                     ' </div>',
                     ' <div class="cy-chat-text">',
                     dialogContent,
-                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playContent(\'' + parseContent  +'\')"></span>',
+                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playTeacherContent(\'' + parseContent  +'\')"></span>',
                     '</div>',
                     '</li>'
                 ].join("");
-                CHAT.playContent(parseContent.replaceAll("\\", ""), "Annie");
+                CHAT.playTeacherContent(parseContent.replaceAll("\\", ""));
             } else if (name.includes("学伴")) {
                 _li = [
                     '<li>',
@@ -152,11 +152,11 @@ window.CHAT = {
                     ' </div>',
                     ' <div class="cy-chat-text">',
                     dialogContent,
-                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playContent(\'' + parseContent  +'\')"></span>',
+                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playAssistantContent(\'' + parseContent  +'\')"></span>',
                     '</div>',
                     '</li>'
                 ].join("");
-                CHAT.playContent(parseContent.replaceAll("\\", ""), "Aiwei");
+                CHAT.playAssistantContent(parseContent.replaceAll("\\", ""));
             } else {
                 _li = [
                     '<li>',
@@ -166,11 +166,11 @@ window.CHAT = {
                     ' </div>',
                     ' <div class="cy-chat-text">',
                     dialogContent,
-                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playContent(\'' + parseContent  +'\')"></span>',
+                    ' <span class="iconfont  icon-bofang" style="cursor: pointer;" title="播放" onclick="CHAT.playOthersContent(\'' + parseContent  +'\')"></span>',
                     '</div>',
                     '</li>'
                 ].join("");
-                CHAT.playContent(parseContent.replaceAll("\\", ""), "sitong");
+                CHAT.playOthersContent(parseContent.replaceAll("\\", ""));
             }
             $(".cy-chat-main ul").append(_li);
         }
@@ -320,18 +320,18 @@ window.CHAT = {
     //播放对话内容
     playContent: function (text, type) {
 
-        // if (sessionStorage.getItem(text)) {
-        //     var audio = document.createElement("audio");
-        //     audio.controls = true;
-        //     audio.style.visibility = 'hidden';
-        //     //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
-        //     audio.src = sessionStorage.getItem(text);
-        //     audio.play();
-        //     setTimeout(function () {
-        //         (window.URL || webkitURL).revokeObjectURL(audio.src);
-        //     }, 5000);
-        //     return;
-        // }
+        if (sessionStorage.getItem(text)) {
+            var audio = document.createElement("audio");
+            audio.controls = true;
+            audio.style.visibility = 'hidden';
+            //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
+            audio.src = sessionStorage.getItem(text);
+            audio.play();
+            setTimeout(function () {
+                (window.URL || webkitURL).revokeObjectURL(audio.src);
+            }, 5000);
+            return;
+        }
         // // console.log("hi");
         // // dialogContent = dialogContent.replaceAll("<br\/>", "");
         // console.log(text);
@@ -348,7 +348,7 @@ window.CHAT = {
             }
         };
         $.ajax(settings).done(function (response) {
-            // sessionStorage.setItem(text, response);
+            sessionStorage.setItem(text, response);
             var audio = document.createElement("audio");
             audio.controls = true;
             audio.style.visibility = 'hidden';
@@ -364,5 +364,14 @@ window.CHAT = {
         // $.get("http://localhost:8001/speech/test", {'name' : 'guilin'}, function (data) {
         //     console.log(data);
         // });
+    },
+    playTeacherContent: function (text) {
+        this.playContent(text, "Annie");
+    },
+    playAssistantContent: function (text) {
+        this.playContent(text, "Aiwei");
+    },
+    playOthersContent: function (text) {
+        this.playContent(text, "sitong");
     }
 };
