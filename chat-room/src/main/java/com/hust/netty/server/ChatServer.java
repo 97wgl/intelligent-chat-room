@@ -1,5 +1,6 @@
 package com.hust.netty.server;
 
+import com.hust.netty.server.handler.ImIdleHandler;
 import com.hust.netty.server.handler.WebSocketHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -45,7 +46,7 @@ public class ChatServer {
                 @Override
                 protected void initChannel(SocketChannel channel) {
                     ChannelPipeline pipeline = channel.pipeline();
-//                  pipeline.addLast("idle", new ImIdleHandler(3600,3600,3600)); // 心跳检测
+                    pipeline.addLast("idle", new ImIdleHandler(9 * 60,  9 * 60, 9 * 60)); // 心跳检测，9分钟检测一次，比nginx设置的10分钟短一点
                     pipeline.addLast("http-codec", new HttpServerCodec()); // Http消息编码解码
                     pipeline.addLast("aggregator", new HttpObjectAggregator(65536)); // Http消息组装
                     pipeline.addLast("http-chunked", new ChunkedWriteHandler()); // WebSocket通信支持
