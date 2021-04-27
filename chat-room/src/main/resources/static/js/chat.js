@@ -345,7 +345,10 @@ window.CHAT = {
     },
     //播放对话内容
     playContent: function (text, type) {
-        text = text.replaceAll("\\", "");
+        // console.log(text);
+        text = text.split("@")[0]
+        text = CHAT.clearHtmlTag(text);
+        // console.log("clear... \n" + text);
         if (CHAT.currPlayAudio == null) {
             CHAT.voiceQueue.shift();
             if (sessionStorage.getItem(text)) {
@@ -378,5 +381,11 @@ window.CHAT = {
     },
     playOthersContent: function (text) {
         CHAT.playContent(text, "sitong");
+    },
+    clearHtmlTag: function (data) {
+        var str = data || '';
+        str = str.replaceAll("\\", "");
+        str = str.replace(/<\/?.+?>/g,"");
+        return str.replace(/&nbsp;/ig,'');
     }
 };
