@@ -55,8 +55,8 @@ public class MsgProcessor {
     private final static IMMessage teacherResponse = new IMMessage(IMP.CHAT.getName(), "虚拟教师", "https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207204353.png");
     // 对话API
     private static final DialogLibraryService dialogLibraryService;
-    // 学伴等待时长 10s
-    private final Integer WAIT_TIME = 10 * 1000;
+    // 学伴等待时长 25s
+    private final Integer WAIT_TIME = 25 * 1000;
 
     static {
         // 通过自定义工具类获取SpringBoot的service对象
