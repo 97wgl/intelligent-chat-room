@@ -13,6 +13,7 @@ import com.hust.netty.protocol.IMEncoder;
 import com.hust.netty.protocol.IMMessage;
 import com.hust.netty.protocol.IMP;
 import com.hust.util.SpringContextUtil;
+import com.hust.util.StringUtil;
 import com.ibm.cloud.sdk.core.security.IamAuthenticator;
 import com.ibm.watson.assistant.v2.Assistant;
 import com.ibm.watson.assistant.v2.model.*;
@@ -219,7 +220,7 @@ public class MsgProcessor {
             String responseType = s.responseType();
             switch (responseType) {
                 case "text":
-                    res.append(s.text());
+                    res.append(StringUtil.removeBracket(s.text()));
                     break;
                 case "image":
                     res.append("<img src='").append(s.source()).append("'>");
