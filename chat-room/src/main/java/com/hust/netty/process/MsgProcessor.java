@@ -62,7 +62,7 @@ public class MsgProcessor {
     // 对话API
     private static final DialogLibraryService dialogLibraryService;
     // 学伴等待时长 25s
-    private final Integer WAIT_TIME = 20 * 1000;
+    private final Integer WAIT_TIME = 15 * 1000;
     private final Integer WELCOME_WAIT_TIME = 5 * 1000;
 
     private SessionResponse watsonSessionV2 = null;
@@ -203,7 +203,7 @@ public class MsgProcessor {
             if (ok != null) {
                 assisRequest.setContent(ok);
             }
-            new Timer().schedule(new AssistantReplyTimerTask(client, pair.getDialogCounter() - 1, assisRequest, onlineUsers, watsonSessionV2), WELCOME_WAIT_TIME);
+            new Timer().schedule(new AssistantReplyTimerTask(client, pair.getDialogCounter() - 1, assisRequest, onlineUsers, watsonSessionV2), WAIT_TIME);
             // new Timer().schedule(new WatsonAssistantReplyTimerTask(assisRequest, onlineUsers, pairForAssistant.getSessionResponse(), pair.getDialogCounter() - 1), WAIT_TIME);
             String sysText = encoder.encode(teacherResponse);
             // System.out.println(sysText);
@@ -272,6 +272,9 @@ public class MsgProcessor {
     }
 
     public static String buildResponseText(MessageResponse messageResponse) {
+        if (messageResponse == null) {
+            return "会话超时";
+        }
         StringBuilder res = new StringBuilder();
         for (RuntimeResponseGeneric s : messageResponse.getOutput().getGeneric()) {
             String responseType = s.responseType();
@@ -464,9 +467,7 @@ class AssistantReplyTimerTask extends TimerTask {
         log.info("学伴第{}轮对话, 学生请求:{}", dialogCounter, request.getContent());
         assistantResponse.setContent(buildResponseText(WatsonAssistantService.requestOfText(request.getContent() + " " + dialogCounter, watsonSessionV2)).replaceAll("-", " "));
         assistantResponse.setHeadPic("https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207200240.jpeg");
-        for (Channel channel: onlineUsers) {
-            channel.writeAndFlush(new TextWebSocketFrame(new IMEncoder().encode(assistantResponse)));
-        }
+        session.writeAndFlush(new TextWebSocketFrame(new IMEncoder().encode(assistantResponse)));
         sessionResponseCounterPair.getAssistantReplySet().add(dialogCounter);
     }
 }
