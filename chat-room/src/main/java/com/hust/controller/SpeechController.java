@@ -59,7 +59,7 @@ public class SpeechController {
     @ResponseBody
     public String tts(@RequestParam(value = "text") String text, @RequestParam(value = "type") String type) {
         String fileName = LocalDate.now() + "_tts_" + System.currentTimeMillis() + ".wav";
-        log.info("语音合成：" + fileName);
+        // log.info("语音合成：" + fileName);
         SpeechSynthesizerRestfulService.request(text, uploadFilePath + fileName, type);
         return "/upload/" + fileName;
     }

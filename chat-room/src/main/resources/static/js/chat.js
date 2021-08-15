@@ -1,7 +1,7 @@
 //WebScoket初始化
 window.CHAT = {
     serverAddr: "ws://" + window.location.hostname + ":8002/ws",
-    // serverAddr: "wss://97wgl.cn/ws",
+    //serverAddr: "wss://97wgl.cn/ws",
     socket: null,
     username: '',
     headPic: $t.getHeadPic(),

@@ -1,6 +1,7 @@
 package com.hust.service;
 
 import com.hust.config.AssistantConfig;
+import com.hust.util.StringUtil;
 import com.ibm.cloud.sdk.core.security.IamAuthenticator;
 import com.ibm.watson.assistant.v2.Assistant;
 import com.ibm.watson.assistant.v2.model.*;
@@ -18,6 +19,7 @@ public class WatsonAssistantService {
 
     public static MessageResponse requestOfText(String request, SessionResponse session) {
 
+        request = StringUtil.removeSpecialChar(request);
         MessageInput input = new MessageInput.Builder()
                 .messageType("text")
                 .text(request)

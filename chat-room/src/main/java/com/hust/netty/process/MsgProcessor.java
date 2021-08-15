@@ -25,11 +25,10 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import io.netty.util.internal.ObjectUtil;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +47,6 @@ public class MsgProcessor {
     // 每一个客户端对应一个Watson的Session
     // private static final ConcurrentHashMap<Channel, SessionResponse> clientSessionMap = new ConcurrentHashMap<>();
     protected static final ConcurrentHashMap<Channel, SessionResponseCounterPair> clientSession = new ConcurrentHashMap<>();
-    protected static final ConcurrentHashMap<Channel, SessionResponseCounterPair> clientSessionForAssistant = new ConcurrentHashMap<>();
     // channel自定义属性
     private final AttributeKey<String> USERNAME = AttributeKey.valueOf("username");
     private final AttributeKey<String> HEAD_PIC = AttributeKey.valueOf("headPic");
@@ -66,6 +64,8 @@ public class MsgProcessor {
     // 学伴等待时长 25s
     private final Integer WAIT_TIME = 20 * 1000;
     private final Integer WELCOME_WAIT_TIME = 5 * 1000;
+
+    private SessionResponse watsonSessionV2 = null;
 
     static {
         // 通过自定义工具类获取SpringBoot的service对象
@@ -113,7 +113,6 @@ public class MsgProcessor {
             IamAuthenticator authenticatorV2 = new IamAuthenticator(AssistantConfig.API_KEY);
             Assistant assistantV2 = new Assistant("2020-11-30", authenticatorV2);
             assistant.setServiceUrl(AssistantConfig.SERVICE_URL);
-            SessionResponse watsonSessionV2 = null;
             // 创建watson助手的session
             while (watsonSessionV2 == null) {
                 try {
@@ -133,11 +132,12 @@ public class MsgProcessor {
             // 将netty客户端和watson的session进行对应
             // clientSessionMap.put(client, watsonSession);
             clientSession.put(client, new SessionResponseCounterPair(watsonSession, 1, 0));
-            clientSessionForAssistant.put(client, new SessionResponseCounterPair(watsonSessionV2, 1, 0));
+//            clientSessionForAssistant.put(client, new SessionResponseCounterPair(watsonSessionV2, 1, 0));
 
             // 学伴定时
            // assisRequest.setContent("hello，kevin，my name is wangguilin");
             // new Timer().schedule(new WatsonAssistantReplyTimerTask(assisRequest, onlineUsers, watsonSessionV2), WELCOME_WAIT_TIME);
+            //new Timer().schedule(new AssistantReplyTimerTask(client, 1, request, onlineUsers, watsonSessionV2), WAIT_TIME);
             // 老师打招呼
             teacherResponse.setTime(sysTime());
             teacherResponse.setContent(buildResponseText(WatsonService.requestOfText(request.getContent(), watsonSession)));
@@ -160,8 +160,6 @@ public class MsgProcessor {
                 channel.writeAndFlush(new TextWebSocketFrame(text));
                 client.writeAndFlush(new TextWebSocketFrame(welcomeText));
             }
-           //  client.writeAndFlush(new TextWebSocketFrame(assisWelcomeText));
-            // new Thread(new AssistantReplyTask(client, 1, 1)).start();
         }
         // 登出动作
         else if (IMP.LOGOUT.getName().equals(request.getCmd())) {
@@ -170,24 +168,31 @@ public class MsgProcessor {
         // 聊天动作
         else if (IMP.CHAT.getName().equals(request.getCmd())) {
             SessionResponseCounterPair pair = clientSession.get(client);
-            SessionResponseCounterPair pairForAssistant = clientSessionForAssistant.get(client);
+//            SessionResponseCounterPair pairForAssistant = clientSessionForAssistant.get(client);
             pair.getStuRepliedMap().put(pair.getDialogCounter() - 1, false);
             pair.getStuRepliedMap().put(pair.getDialogCounter(), true);
+//            pairForAssistant.getStuRepliedMap().put(pair.getDialogCounter() - 1, false);
+//            pairForAssistant.getStuRepliedMap().put(pair.getDialogCounter(), true);
             // 调用IBM Watson
             teacherResponse.setTime(sysTime());
+            String ok = null;
             MessageResponse messageResponse = WatsonService.requestOfText(request.getContent(), pair.getSessionResponse());
             // 没有识别到意图
-            if (messageResponse.getOutput().getIntents().size() == 0 && messageResponse.getOutput().getEntities().size() == 0) {
+            final List<RuntimeIntent> intents = messageResponse.getOutput().getIntents();
+            final List<RuntimeEntity> entities = messageResponse.getOutput().getEntities();
+            if (!checkIntentsAndEntities(intents, entities)) {
+                ok = dialogLibraryService.getOne(
+                        new QueryWrapper<DialogLibrary>().eq("class_id", 1).eq("round_no", pair.getDialogCounter())).getAssistantReply();
                 pair.setRepeatResponseCounter(pair.getRepeatResponseCounter() + 1);
-                log.info("没有识别到意图，计数器加1, 当前计数为" + pair.getRepeatResponseCounter());
+                log.info("第" + pair.getDialogCounter() + "轮对话，学生输入：" + request.getContent() + "结果：没有识别到意图，触发重复响应。重复响应计数器加1, 当前重复响应计数更新为" + pair.getRepeatResponseCounter());
                 if (pair.getRepeatResponseCounter() > 3) {
-                    messageResponse = WatsonService.requestOfText(dialogLibraryService.getOne(
-                            new QueryWrapper<DialogLibrary>().eq("class_id", 1).eq("round_no", pair.getDialogCounter())).getAssistantReply(), pair.getSessionResponse());
+                    messageResponse = WatsonService.requestOfText(ok, pair.getSessionResponse());
                     log.info("计数器大于3，跳转到下一轮对话");
                     pair.setDialogCounter(pair.getDialogCounter() + 1);
                     pair.setRepeatResponseCounter(0);
                 }
             } else {
+                log.info("第" + pair.getDialogCounter() + "轮对话，学生输入：" + request.getContent() + "，结果：识别到意图：{}，对话轮次加1, 当前轮次更新为{}", messageResponse.getOutput().getIntents().size() == 0 ? messageResponse.getOutput().getEntities() : messageResponse.getOutput().getIntents(), pair.getDialogCounter() + 1);
                 pair.setDialogCounter(pair.getDialogCounter() + 1);
             }
             teacherResponse.setContent(buildResponseText(messageResponse));
@@ -195,7 +200,11 @@ public class MsgProcessor {
             if (onlineUsers.size() > 1) {
                 teacherResponse.setContent(teacherResponse.getContent() + " @" + request.getSender());
             }
-            new Timer().schedule(new WatsonAssistantReplyTimerTask(assisRequest, onlineUsers, pairForAssistant.getSessionResponse()), WAIT_TIME);
+            if (ok != null) {
+                assisRequest.setContent(ok);
+            }
+            new Timer().schedule(new AssistantReplyTimerTask(client, pair.getDialogCounter() - 1, assisRequest, onlineUsers, watsonSessionV2), WELCOME_WAIT_TIME);
+            // new Timer().schedule(new WatsonAssistantReplyTimerTask(assisRequest, onlineUsers, pairForAssistant.getSessionResponse(), pair.getDialogCounter() - 1), WAIT_TIME);
             String sysText = encoder.encode(teacherResponse);
             // System.out.println(sysText);
             for (Channel channel : onlineUsers) {
@@ -212,8 +221,6 @@ public class MsgProcessor {
                 channel.writeAndFlush(new TextWebSocketFrame(text));
                 channel.writeAndFlush(new TextWebSocketFrame(sysText));
             }
-            // new Thread(new AssistantReplyTask(client, pair.getDialogCounter(), 1)).start();
-
         }
         // 鲜花动作
         else if (IMP.FLOWER.getName().equals(request.getCmd())) {
@@ -248,6 +255,19 @@ public class MsgProcessor {
                 String content = encoder.encode(request);
                 channel.writeAndFlush(new TextWebSocketFrame(content));
             }
+        }
+    }
+
+    private boolean checkIntentsAndEntities(List<RuntimeIntent> intents, List<RuntimeEntity> entities) {
+        if (intents.size() != 0) {
+            for (RuntimeIntent intent : intents) {
+                if (intent.intent().equals("negative_response") || intent.intent().equals("irrelevant")) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return entities.size() > 0;
         }
     }
 
@@ -359,25 +379,67 @@ public class MsgProcessor {
 }
 
 
+//@Slf4j
+//class AssistantReplyTimerTask extends TimerTask {
+//    private static final DialogLibraryService dialogLibraryService;
+//
+//    static {
+//        // 通过SpringBoot的上下文中获取service对象
+//        dialogLibraryService = SpringContextUtil.getBean(DialogLibraryService.class);
+//    }
+//
+//    private final Channel session;
+//
+//    private final Integer classId;
+//
+//    private final Integer dialogCounter;
+//
+//    public AssistantReplyTimerTask(Channel session, Integer dialogCounter, Integer classId) {
+//        this.session = session;
+//        this.dialogCounter = dialogCounter;
+//        this.classId = classId;
+//    }
+//
+//    @SneakyThrows
+//    @Override
+//    public void run() {
+//        SessionResponseCounterPair sessionResponseCounterPair = MsgProcessor.clientSession.get(session);
+//        // 对话逻辑中学伴应该响应 && 学生未响应 && 学伴在此轮对话中未响应
+//        if (ClassOneData.data.containsKey(dialogCounter)
+//                && !sessionResponseCounterPair.getStuRepliedMap().containsKey(dialogCounter)
+//                && !sessionResponseCounterPair.getAssistantReplySet().contains(dialogCounter)) {
+//            IMMessage assistantResponse = new IMMessage(IMP.CHAT.getName(), sysTime(), "学伴");
+//            // 调用学伴回答库进行响应
+//            assistantResponse.setContent(dialogLibraryService.getOne(
+//                    new QueryWrapper<DialogLibrary>().eq("class_id", classId).eq("round_no", dialogCounter)).getAssistantReply());
+//
+//            assistantResponse.setHeadPic("https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207200240.jpeg");
+//            session.writeAndFlush(new TextWebSocketFrame(new IMEncoder().encode(assistantResponse)));
+//            sessionResponseCounterPair.getAssistantReplySet().add(dialogCounter);
+//        }
+//    }
+//}
+
 @Slf4j
 class AssistantReplyTimerTask extends TimerTask {
-    private static final DialogLibraryService dialogLibraryService;
-
-    static {
-        // 通过SpringBoot的上下文中获取service对象
-        dialogLibraryService = SpringContextUtil.getBean(DialogLibraryService.class);
-    }
 
     private final Channel session;
 
-    private final Integer classId;
-
     private final Integer dialogCounter;
 
-    public AssistantReplyTimerTask(Channel session, Integer dialogCounter, Integer classId) {
+    private final SessionResponse watsonSessionV2;
+
+    private final IMMessage request;
+
+    private final ChannelGroup onlineUsers;
+
+    public AssistantReplyTimerTask(Channel session, Integer dialogCounter, IMMessage request,
+                                   ChannelGroup onlineUsers, SessionResponse sessionResponse) {
         this.session = session;
         this.dialogCounter = dialogCounter;
-        this.classId = classId;
+        this.request = request;
+        this.onlineUsers = onlineUsers;
+        this.watsonSessionV2 = sessionResponse;
     }
 
     @SneakyThrows
@@ -385,18 +447,27 @@ class AssistantReplyTimerTask extends TimerTask {
     public void run() {
         SessionResponseCounterPair sessionResponseCounterPair = MsgProcessor.clientSession.get(session);
         // 对话逻辑中学伴应该响应 && 学生未响应 && 学伴在此轮对话中未响应
-        if (ClassOneData.data.containsKey(dialogCounter)
-                && !sessionResponseCounterPair.getStuRepliedMap().containsKey(dialogCounter)
-                && !sessionResponseCounterPair.getAssistantReplySet().contains(dialogCounter)) {
-            IMMessage assistantResponse = new IMMessage(IMP.CHAT.getName(), sysTime(), "学伴");
-            // 调用学伴回答库进行响应
-            assistantResponse.setContent(dialogLibraryService.getOne(
-                    new QueryWrapper<DialogLibrary>().eq("class_id", classId).eq("round_no", dialogCounter)).getAssistantReply());
-
-            assistantResponse.setHeadPic("https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207200240.jpeg");
-            session.writeAndFlush(new TextWebSocketFrame(new IMEncoder().encode(assistantResponse)));
-            sessionResponseCounterPair.getAssistantReplySet().add(dialogCounter);
+//        if (!sessionResponseCounterPair.getStuRepliedMap().containsKey(dialogCounter)
+//                && !sessionResponseCounterPair.getAssistantReplySet().contains(dialogCounter)) {
+//            IMMessage assistantResponse = new IMMessage(IMP.CHAT.getName(), sysTime(), "学伴");
+//            // 调用学伴回答库进行响应
+//            log.info("学伴第{}轮对话, 学生请求:{}", dialogCounter, request.getContent());
+//            assistantResponse.setContent(buildResponseText(WatsonAssistantService.requestOfText(request.getContent() + " " + dialogCounter, watsonSessionV2)).replaceAll("-", " "));
+//            assistantResponse.setHeadPic("https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207200240.jpeg");
+//            for (Channel channel: onlineUsers) {
+//                channel.writeAndFlush(new TextWebSocketFrame(new IMEncoder().encode(assistantResponse)));
+//            }
+//            sessionResponseCounterPair.getAssistantReplySet().add(dialogCounter);
+//        }
+        IMMessage assistantResponse = new IMMessage(IMP.CHAT.getName(), sysTime(), "学伴");
+        // 调用学伴回答库进行响应
+        log.info("学伴第{}轮对话, 学生请求:{}", dialogCounter, request.getContent());
+        assistantResponse.setContent(buildResponseText(WatsonAssistantService.requestOfText(request.getContent() + " " + dialogCounter, watsonSessionV2)).replaceAll("-", " "));
+        assistantResponse.setHeadPic("https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207200240.jpeg");
+        for (Channel channel: onlineUsers) {
+            channel.writeAndFlush(new TextWebSocketFrame(new IMEncoder().encode(assistantResponse)));
         }
+        sessionResponseCounterPair.getAssistantReplySet().add(dialogCounter);
     }
 }
 
@@ -411,15 +482,18 @@ class WatsonAssistantReplyTimerTask extends TimerTask {
 
     private final IMMessage request;
 
+    private final Integer dialogIndex;
+
     // 虚拟学伴对话角色
     private final static IMMessage assisResponse = new IMMessage(IMP.CHAT.getName(), "学伴", "https://wgl-picture.oss-cn-hangzhou.aliyuncs.com/img/20201207200240.jpeg");
 
 
-    public WatsonAssistantReplyTimerTask(IMMessage request,
-                                         ChannelGroup onlineUsers, SessionResponse sessionResponse) {
+    public WatsonAssistantReplyTimerTask(IMMessage request, ChannelGroup onlineUsers,
+                                         SessionResponse sessionResponse, Integer dialogIndex) {
         this.request = request;
         this.onlineUsers = onlineUsers;
         this.watsonSessionV2 = sessionResponse;
+        this.dialogIndex = dialogIndex;
     }
 
     @SneakyThrows
@@ -427,7 +501,7 @@ class WatsonAssistantReplyTimerTask extends TimerTask {
     public void run() {
         // 学伴打招呼
         assisResponse.setTime(sysTime());
-        assisResponse.setContent(buildResponseText(WatsonAssistantService.requestOfText(request.getContent(), watsonSessionV2)).replaceAll("-", " "));
+        assisResponse.setContent(buildResponseText(WatsonAssistantService.requestOfText(request.getContent() + " " + dialogIndex, watsonSessionV2)).replaceAll("-", " "));
         if (onlineUsers.size() > 1) {
             assisResponse.setContent(assisResponse.getContent() + " @" + request.getSender());
         }

@@ -72,7 +72,7 @@ public class SpeechTokenService {
             JSONObject result = JSON.parseObject(response.getData());
             String token = result.getJSONObject(KEY_TOKEN).getString(KEY_ID);
             long expireTime = result.getJSONObject(KEY_TOKEN).getLongValue(KEY_EXPIRETIME);
-            log.info("获取到的Token： " + token + "，有效期时间戳(单位：秒): " + expireTime);
+            log.info("获取到的Token： " + token + "，有效期时间(单位：分钟): " + expireTime / (1000 * 60));
             // 将10位数的时间戳转换为北京时间
             String expireDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(expireTime * 1000));
             log.info("Token有效期的北京时间：" + expireDate);
